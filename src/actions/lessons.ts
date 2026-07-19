@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { checkAndUnlockAchievements } from "./achievements";
+import { updateStreakStats } from "./streaks";
 
 export async function getLessonContent(lessonId: string) {
   const supabase = await createClient();
@@ -103,6 +104,7 @@ export async function completeLesson(lessonId: string, courseId: string) {
     });
   }
 
+  await updateStreakStats();
   const newAchievements = await checkAndUnlockAchievements();
 
   revalidatePath("/student");
