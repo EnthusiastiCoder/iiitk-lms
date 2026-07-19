@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { FadeIn } from "@/components/motion/fade-in";
 import { ProfileEditor } from "@/components/profile/ProfileEditor";
+import { ActivityHeatmap } from "@/components/profile/ActivityHeatmap";
 
 const tierConfig: Record<string, { color: string; label: string }> = {
   bronze: { color: "var(--color-tier-bronze)", label: "Bronze" },
@@ -41,6 +42,13 @@ export default async function ProfilePage() {
     .select("*")
     .eq("user_id", user!.id)
     .single();
+
+  const { data: streakData } = await supabase
+    .from("streak_log")
+    .select("activity_date, xp_earned, lessons_completed")
+    .eq("user_id", user!.id)
+    .order("activity_date", { ascending: false })
+    .limit(365);
 
   const [enrollments, completions, courses] = await Promise.all([
     getUserEnrollments(),
@@ -196,6 +204,27 @@ export default async function ProfilePage() {
             </Card>
           ))}
         </div>
+      </FadeIn>
+
+      {/* Activity Heatmap */}
+      <FadeIn delay={0.15}>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Flame className="h-4 w-4 text-streak" />
+              Activity
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ActivityHeatmap
+              data={(streakData ?? []).map((d: any) => ({
+                date: d.activity_date,
+                xp: d.xp_earned,
+                lessons: d.lessons_completed,
+              }))}
+            />
+          </CardContent>
+        </Card>
       </FadeIn>
 
       {/* Course Progress */}
