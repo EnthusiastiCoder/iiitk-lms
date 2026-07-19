@@ -37,23 +37,45 @@ export async function getCourseWithModules(slug: string) {
 
   if (!course) return null;
 
-  const { data: modules } = await supabase
-    .from("modules")
-    .select("*")
-    .eq("course_id", course.id)
-    .order("order");
-
-  const { data: lessons } = await supabase
-    .from("lessons")
-    .select("id, module_id, title, description, \"order\", type, estimated_minutes, xp_reward")
-    .eq("course_id", course.id)
-    .order("order");
+  const [
+    { data: modules },
+    { data: lessons },
+    { data: quizzes },
+    { data: assignments },
+    { data: projects },
+  ] = await Promise.all([
+    supabase
+      .from("modules")
+      .select("*")
+      .eq("course_id", course.id)
+      .order("order"),
+    supabase
+      .from("lessons")
+      .select("id, module_id, title, description, \"order\", type, estimated_minutes, xp_reward")
+      .eq("course_id", course.id)
+      .order("order"),
+    supabase
+      .from("quizzes")
+      .select("id, module_id, title, description, time_limit, question_count, xp_reward")
+      .eq("course_id", course.id),
+    supabase
+      .from("assignments")
+      .select("id, module_id, title, description, difficulty, xp_reward, language, due_date")
+      .eq("course_id", course.id),
+    supabase
+      .from("projects")
+      .select("id, module_id, title, description, difficulty, xp_reward, language, is_final_project")
+      .eq("course_id", course.id),
+  ]);
 
   return {
     ...course,
     modules: (modules ?? []).map((m: any) => ({
       ...m,
       lessons: (lessons ?? []).filter((l: any) => l.module_id === m.id),
+      quizzes: (quizzes ?? []).filter((q: any) => q.module_id === m.id),
+      assignments: (assignments ?? []).filter((a: any) => a.module_id === m.id),
+      projects: (projects ?? []).filter((p: any) => p.module_id === m.id),
     })),
   };
 }
