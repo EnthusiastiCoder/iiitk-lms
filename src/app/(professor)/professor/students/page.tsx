@@ -61,10 +61,10 @@ export default async function StudentsPage({
               <thead>
                 <tr className="border-b text-left text-sm text-muted-foreground">
                   <th className="p-4 font-medium">Student</th>
-                  <th className="p-4 font-medium">Level</th>
+                  <th className="p-4 font-medium hidden sm:table-cell">Level</th>
                   <th className="p-4 font-medium">XP</th>
-                  <th className="p-4 font-medium">Tier</th>
-                  <th className="p-4 font-medium">Streak</th>
+                  <th className="p-4 font-medium hidden md:table-cell">Tier</th>
+                  <th className="p-4 font-medium hidden sm:table-cell">Streak</th>
                 </tr>
               </thead>
               <tbody>
@@ -113,18 +113,18 @@ export default async function StudentsPage({
                             </div>
                           </Link>
                         </td>
-                        <td className="p-4 text-sm">
+                        <td className="p-4 text-sm hidden sm:table-cell">
                           {stats?.level ?? 1}
                         </td>
                         <td className="p-4 text-sm font-medium">
                           {stats?.total_xp ?? 0}
                         </td>
-                        <td className="p-4">
+                        <td className="p-4 hidden md:table-cell">
                           <Badge variant="secondary" className="text-xs">
                             {stats?.tier ?? "Bronze"}
                           </Badge>
                         </td>
-                        <td className="p-4 text-sm">
+                        <td className="p-4 text-sm hidden sm:table-cell">
                           {stats?.current_streak ?? 0} days
                         </td>
                       </tr>
