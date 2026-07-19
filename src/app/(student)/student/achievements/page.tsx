@@ -1,4 +1,9 @@
+import type { Metadata } from "next";
 import { getUserAchievements } from "@/actions/gamification";
+
+export const metadata: Metadata = {
+  title: "Achievements | IIIT Kalyani LMS",
+};
 import { Trophy, Lock, Star, Flame, Users, BookOpen, Award } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

@@ -1,9 +1,25 @@
+import type { Metadata } from "next";
 import { getCourseWithModules, getUserCompletions, getUserEnrollments } from "@/actions/courses";
+import { getCourseBySlug } from "@/actions/courses";
 import { notFound } from "next/navigation";
 import { BookOpen, Clock, Zap, BarChart3 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CourseModules } from "@/components/courses/CourseModules";
 import { EnrollButton } from "@/components/courses/EnrollButton";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ courseSlug: string }>;
+}): Promise<Metadata> {
+  const { courseSlug } = await params;
+  const course = await getCourseBySlug(courseSlug);
+  return {
+    title: course
+      ? `${course.title} | IIIT Kalyani LMS`
+      : "Course | IIIT Kalyani LMS",
+  };
+}
 
 export default async function CourseDetailPage({
   params,
