@@ -48,7 +48,8 @@ export async function submitQuizAttempt(
 export async function submitAssignment(
   assignmentId: string,
   courseId: string,
-  code: string
+  code: string,
+  fileUrls?: string[]
 ) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -60,6 +61,7 @@ export async function submitAssignment(
     course_id: courseId,
     code,
     status: "pending",
+    file_urls: fileUrls?.length ? fileUrls : null,
   });
 
   revalidatePath("/student/submissions");
@@ -69,7 +71,8 @@ export async function submitAssignment(
 export async function submitProject(
   projectId: string,
   courseId: string,
-  code: string
+  code: string,
+  fileUrls?: string[]
 ) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -81,6 +84,7 @@ export async function submitProject(
     course_id: courseId,
     code,
     status: "pending",
+    file_urls: fileUrls?.length ? fileUrls : null,
   });
 
   revalidatePath("/student/submissions");
