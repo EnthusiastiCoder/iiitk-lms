@@ -1,32 +1,133 @@
+import { createClient } from "@/lib/supabase/server";
+import { getUserCompletions } from "@/actions/courses";
 import { Route } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { FadeIn } from "@/components/motion/fade-in";
+import { SkillTreeView } from "@/components/skill-tree/SkillTreeView";
 
-export default function SkillTree() {
+interface Props {
+  searchParams: Promise<{ course?: string }>;
+}
+
+export default async function SkillTreePage({ searchParams }: Props) {
+  const { course: selectedCourseId } = await searchParams;
+  const supabase = await createClient();
+
+  // Find all courses that have skill tree nodes
+  const { data: treeCourseIds } = await supabase
+    .from("skill_tree_nodes")
+    .select("course_id")
+    .limit(100);
+
+  const uniqueCourseIds = [
+    ...new Set((treeCourseIds ?? []).map((r: any) => r.course_id)),
+  ];
+
+  if (uniqueCourseIds.length === 0) {
+    return (
+      <div className="p-4 sm:p-6 lg:p-8 h-full overflow-y-auto">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2 rounded-xl bg-brand/10">
+            <Route className="h-6 w-6 text-brand" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">Skill Tree</h1>
+            <p className="text-muted-foreground">
+              No skill tree data available yet.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Fetch course metadata for those courses
+  const { data: courses } = await supabase
+    .from("courses")
+    .select("id, title, accent_color")
+    .in("id", uniqueCourseIds)
+    .order("title");
+
+  const courseList = courses ?? [];
+  const activeCourseId = selectedCourseId ?? courseList[0]?.id;
+  const activeCourse = courseList.find((c: any) => c.id === activeCourseId);
+  const courseColor = activeCourse?.accent_color ?? "#58CC02";
+
+  // Fetch nodes and edges for the active course
+  const [{ data: nodes }, { data: edges }] = await Promise.all([
+    supabase
+      .from("skill_tree_nodes")
+      .select("*")
+      .eq("course_id", activeCourseId)
+      .order("y")
+      .order("x"),
+    supabase
+      .from("skill_tree_edges")
+      .select("*")
+      .eq("course_id", activeCourseId),
+  ]);
+
+  // Fetch user lesson completions to determine node status
+  const completions = await getUserCompletions(activeCourseId);
+  const completedLessonIds = new Set(
+    completions.map((c: any) => c.lesson_id)
+  );
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 h-full overflow-y-auto">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 rounded-xl bg-brand/10">
-          <Route className="h-6 w-6 text-brand" />
+      <FadeIn>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-brand/10">
+              <Route className="h-6 w-6 text-brand" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold">Skill Tree</h1>
+              <p className="text-muted-foreground text-sm">
+                Track your learning journey across connected skills
+              </p>
+            </div>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold">Skill Tree</h1>
-          <p className="text-muted-foreground">
-            Interactive skill tree coming soon...
-          </p>
-        </div>
-      </div>
+      </FadeIn>
 
-      <div className="flex items-center justify-center min-h-[400px] rounded-xl border border-dashed border-border">
-        <div className="text-center space-y-2">
-          <Route className="h-12 w-12 mx-auto text-muted-foreground/40" />
-          <p className="text-lg font-medium text-muted-foreground">
-            Under Construction
-          </p>
-          <p className="text-sm text-muted-foreground/60 max-w-sm">
-            The interactive skill tree will map your learning journey and show
-            how skills connect across courses.
-          </p>
+      {/* Course selector tabs */}
+      <FadeIn delay={0.1}>
+        <div className="flex gap-2 mb-6 flex-wrap">
+          {courseList.map((course: any) => (
+            <a
+              key={course.id}
+              href={`/student/skill-tree?course=${course.id}`}
+              className={
+                course.id === activeCourseId
+                  ? "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-white transition-colors"
+                  : "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              }
+              style={
+                course.id === activeCourseId
+                  ? { backgroundColor: course.accent_color ?? "#58CC02" }
+                  : undefined
+              }
+            >
+              {course.title}
+            </a>
+          ))}
         </div>
-      </div>
+      </FadeIn>
+
+      {/* Skill tree visualization */}
+      <FadeIn delay={0.2}>
+        <Card>
+          <CardContent className="pt-2">
+            <SkillTreeView
+              nodes={nodes ?? []}
+              edges={edges ?? []}
+              completedLessonIds={completedLessonIds}
+              courseColor={courseColor}
+            />
+          </CardContent>
+        </Card>
+      </FadeIn>
     </div>
   );
 }
