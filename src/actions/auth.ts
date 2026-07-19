@@ -3,10 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function login(prevState: { error: string } | null, formData: FormData) {
-  const supabase = await createClient();
-
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
 
@@ -14,6 +13,12 @@ export async function login(prevState: { error: string } | null, formData: FormD
     return { error: "Email and password are required." };
   }
 
+  const { success } = rateLimit(email, 5, 60000);
+  if (!success) {
+    return { error: "Too many attempts. Please try again in a minute." };
+  }
+
+  const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
@@ -24,9 +29,10 @@ export async function login(prevState: { error: string } | null, formData: FormD
   redirect("/student");
 }
 
-export async function register(prevState: { error: string } | null, formData: FormData) {
-  const supabase = await createClient();
-
+export async function register(
+  prevState: { error: string; confirmEmail?: boolean } | null,
+  formData: FormData
+) {
   const fullName = formData.get("fullName") as string;
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
@@ -40,7 +46,13 @@ export async function register(prevState: { error: string } | null, formData: Fo
     return { error: "Password must be at least 6 characters." };
   }
 
-  const { error } = await supabase.auth.signUp({
+  const { success } = rateLimit(email, 5, 60000);
+  if (!success) {
+    return { error: "Too many attempts. Please try again in a minute." };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -54,6 +66,12 @@ export async function register(prevState: { error: string } | null, formData: Fo
 
   if (error) {
     return { error: error.message };
+  }
+
+  // If email confirmation is required, the user object exists but
+  // the session will be null (identities may be empty too).
+  if (data.user && !data.session) {
+    return { error: "", confirmEmail: true };
   }
 
   revalidatePath("/", "layout");
