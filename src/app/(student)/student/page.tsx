@@ -1,4 +1,9 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Dashboard | IIIT Kalyani LMS",
+};
 import { createClient } from "@/lib/supabase/server";
 import {
   getUserEnrollments,

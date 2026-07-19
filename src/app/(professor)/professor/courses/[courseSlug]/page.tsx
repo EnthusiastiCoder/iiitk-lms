@@ -34,6 +34,11 @@ import { CreateLessonDialog } from "@/components/professor/CreateLessonDialog";
 import { CreateQuizDialog } from "@/components/professor/CreateQuizDialog";
 import { CreateAssignmentDialog } from "@/components/professor/CreateAssignmentDialog";
 import { CreateProjectDialog } from "@/components/professor/CreateProjectDialog";
+import { EditModuleDialog } from "@/components/professor/EditModuleDialog";
+import { EditLessonDialog } from "@/components/professor/EditLessonDialog";
+import { EditQuizDialog } from "@/components/professor/EditQuizDialog";
+import { EditAssignmentDialog } from "@/components/professor/EditAssignmentDialog";
+import { EditProjectDialog } from "@/components/professor/EditProjectDialog";
 import { DeleteConfirmDialog } from "@/components/professor/DeleteConfirmDialog";
 
 import {
@@ -267,7 +272,12 @@ export default async function CourseDetailPage({
                           courseId={course.id}
                           moduleName={mod.title}
                         />
-                        <div className="ml-auto">
+                        <div className="ml-auto flex items-center gap-1">
+                          <EditModuleDialog
+                            moduleId={mod.id}
+                            currentTitle={mod.title}
+                            currentDescription={mod.description ?? ""}
+                          />
                           <DeleteConfirmDialog
                             title="Delete Module"
                             description={`Are you sure you want to delete "${mod.title}"? All lessons, quizzes, assignments, and projects in this module will also be deleted. This action cannot be undone.`}
@@ -350,6 +360,15 @@ export default async function CourseDetailPage({
                                           {lesson.xp_reward} XP
                                         </span>
                                       )}
+                                      <EditLessonDialog
+                                        lessonId={lesson.id}
+                                        currentTitle={lesson.title}
+                                        currentDescription={lesson.description ?? ""}
+                                        currentType={lesson.type ?? "reading"}
+                                        currentEstimatedMinutes={lesson.estimated_minutes ?? 15}
+                                        currentXpReward={lesson.xp_reward ?? 50}
+                                        currentContent={lesson.content ?? null}
+                                      />
                                       <DeleteConfirmDialog
                                         title="Delete Lesson"
                                         description={`Are you sure you want to delete "${lesson.title}"? This action cannot be undone.`}
@@ -411,6 +430,13 @@ export default async function CourseDetailPage({
                                           {quiz.xp_reward} XP
                                         </span>
                                       )}
+                                      <EditQuizDialog
+                                        quizId={quiz.id}
+                                        currentTitle={quiz.title}
+                                        currentDescription={quiz.description ?? ""}
+                                        currentTimeLimit={quiz.time_limit_minutes ?? 10}
+                                        currentXpReward={quiz.xp_reward ?? 50}
+                                      />
                                       <DeleteConfirmDialog
                                         title="Delete Quiz"
                                         description={`Are you sure you want to delete "${quiz.title}" and all its questions? This action cannot be undone.`}
@@ -477,6 +503,17 @@ export default async function CourseDetailPage({
                                             {assignment.xp_reward} XP
                                           </span>
                                         )}
+                                        <EditAssignmentDialog
+                                          assignmentId={assignment.id}
+                                          currentTitle={assignment.title}
+                                          currentDescription={assignment.description ?? ""}
+                                          currentDifficulty={assignment.difficulty ?? "medium"}
+                                          currentXpReward={assignment.xp_reward ?? 75}
+                                          currentLanguage={assignment.language ?? "python"}
+                                          currentStarterCode={assignment.starter_code ?? ""}
+                                          currentRequirements={assignment.requirements ?? []}
+                                          currentDueDate={assignment.due_date ?? null}
+                                        />
                                         <DeleteConfirmDialog
                                           title="Delete Assignment"
                                           description={`Are you sure you want to delete "${assignment.title}"? This action cannot be undone.`}
@@ -543,6 +580,16 @@ export default async function CourseDetailPage({
                                           {project.xp_reward} XP
                                         </span>
                                       )}
+                                      <EditProjectDialog
+                                        projectId={project.id}
+                                        currentTitle={project.title}
+                                        currentDescription={project.description ?? ""}
+                                        currentDifficulty={project.difficulty ?? "medium"}
+                                        currentXpReward={project.xp_reward ?? 100}
+                                        currentLanguage={project.language ?? "python"}
+                                        currentStarterCode={project.starter_code ?? ""}
+                                        currentRequirements={project.requirements ?? []}
+                                      />
                                       <DeleteConfirmDialog
                                         title="Delete Project"
                                         description={`Are you sure you want to delete "${project.title}"? This action cannot be undone.`}
