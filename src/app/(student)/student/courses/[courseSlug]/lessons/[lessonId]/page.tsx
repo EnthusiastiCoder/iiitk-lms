@@ -1,4 +1,4 @@
-import { getLessonContent } from "@/actions/lessons";
+import { getLessonContent, getFlashcardDeck } from "@/actions/lessons";
 import { getCourseWithModules, getUserCompletions } from "@/actions/courses";
 import { notFound } from "next/navigation";
 import { LessonViewer } from "@/components/courses/LessonViewer";
@@ -10,9 +10,10 @@ export default async function LessonPage({
 }) {
   const { courseSlug, lessonId } = await params;
 
-  const [lesson, course] = await Promise.all([
+  const [lesson, course, flashcardDeck] = await Promise.all([
     getLessonContent(lessonId),
     getCourseWithModules(courseSlug),
+    getFlashcardDeck(lessonId),
   ]);
 
   if (!lesson || !course) notFound();
@@ -56,6 +57,7 @@ export default async function LessonPage({
             ? { id: nextLesson.id, title: nextLesson.title }
             : null
         }
+        flashcardDeck={flashcardDeck}
       />
     </div>
   );

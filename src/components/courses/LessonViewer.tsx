@@ -21,6 +21,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { completeLesson } from "@/actions/lessons";
+import { FlashcardDeck } from "@/components/flashcard/FlashcardDeck";
+import { XpCelebration } from "@/components/xp/XpCelebration";
 
 interface ContentSection {
   type: "text" | "code" | "callout";
@@ -65,6 +67,12 @@ interface Course {
   modules: Module[];
 }
 
+interface FlashcardDeckData {
+  id: string;
+  title: string;
+  cards: { front: string; back: string }[];
+}
+
 interface LessonViewerProps {
   lesson: Lesson;
   course: Course;
@@ -72,6 +80,7 @@ interface LessonViewerProps {
   completedLessonIds: string[];
   prevLesson: { id: string; title: string } | null;
   nextLesson: { id: string; title: string } | null;
+  flashcardDeck?: FlashcardDeckData | null;
 }
 
 const calloutStyles: Record<
@@ -105,6 +114,7 @@ export function LessonViewer({
   completedLessonIds,
   prevLesson,
   nextLesson,
+  flashcardDeck,
 }: LessonViewerProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -112,6 +122,11 @@ export function LessonViewer({
     completedLessonIds.includes(lesson.id)
   );
   const [xpEarned, setXpEarned] = useState<number | null>(null);
+  const [celebration, setCelebration] = useState<{
+    xp: number;
+    leveledUp: boolean;
+    newLevel?: number;
+  } | null>(null);
   const completedSet = new Set(completedLessonIds);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -121,12 +136,19 @@ export function LessonViewer({
       setCompleted(true);
       if (!result.already) {
         setXpEarned(result.xpEarned);
+        setCelebration({
+          xp: result.xpEarned,
+          leveledUp: result.leveledUp ?? false,
+          newLevel: result.newLevel,
+        });
         setTimeout(() => setXpEarned(null), 3000);
       }
       if (nextLesson) {
-        router.push(
-          `/student/courses/${courseSlug}/lessons/${nextLesson.id}`
-        );
+        setTimeout(() => {
+          router.push(
+            `/student/courses/${courseSlug}/lessons/${nextLesson.id}`
+          );
+        }, 2600);
       }
     });
   };
@@ -261,9 +283,18 @@ export function LessonViewer({
               ))}
             </div>
 
-            {sections.length === 0 && (
+            {sections.length === 0 && !flashcardDeck && (
               <div className="text-center py-16 text-muted-foreground">
                 <p>No content available for this lesson yet.</p>
+              </div>
+            )}
+
+            {flashcardDeck && flashcardDeck.cards.length > 0 && (
+              <div className="mt-8 pt-6 border-t">
+                <FlashcardDeck
+                  title={flashcardDeck.title}
+                  cards={flashcardDeck.cards}
+                />
               </div>
             )}
           </div>
@@ -321,6 +352,15 @@ export function LessonViewer({
           <div className="w-0 sm:w-auto" />
         </div>
       </div>
+
+      {celebration && (
+        <XpCelebration
+          xp={celebration.xp}
+          leveledUp={celebration.leveledUp}
+          newLevel={celebration.newLevel}
+          onDismiss={() => setCelebration(null)}
+        />
+      )}
     </>
   );
 }
