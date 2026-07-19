@@ -20,7 +20,10 @@ export default async function ProfessorLayout({
     .eq("id", user.id)
     .single();
 
-  // Allow any authenticated user for demo purposes
+  if (!profile || (profile.role !== "professor" && profile.role !== "admin")) {
+    redirect("/student");
+  }
+
   return (
     <div className="flex h-screen w-screen overflow-hidden">
       {/* Desktop sidebar - hidden on mobile */}
