@@ -1,8 +1,13 @@
+import type { Metadata } from "next";
 import {
   getCourses,
   getUserEnrollments,
   getUserCompletions,
 } from "@/actions/courses";
+
+export const metadata: Metadata = {
+  title: "Courses | IIIT Kalyani LMS",
+};
 import { CoursesCatalog } from "@/components/courses/CoursesCatalog";
 
 export default async function CoursesPage() {
