@@ -17,24 +17,13 @@ test.describe('Student Course Flows', () => {
   });
 
   test('student can view course detail', async ({ page }) => {
-    await page.goto('/student/courses');
+    // Navigate directly to a known course
+    await page.goto('/student/courses/quantum-computing');
     await page.waitForLoadState('networkidle');
 
-    // Click the first course card/link if available
-    const courseLink = page.locator('a[href*="/student/courses/"]').first();
-    const hasCourses = await courseLink.isVisible().catch(() => false);
-
-    if (hasCourses) {
-      await courseLink.click();
-      await page.waitForLoadState('networkidle');
-
-      // Verify we navigated to a course detail page
-      await expect(page).toHaveURL(/\/student\/courses\/.+/);
-
-      // Verify some content rendered
-      const mainContent = page.locator('main');
-      await expect(mainContent).toBeVisible();
-    }
+    // Verify the page loaded with course content
+    const mainContent = page.locator('main');
+    await expect(mainContent).toBeVisible();
   });
 
   test('student can view lesson', async ({ page }) => {
