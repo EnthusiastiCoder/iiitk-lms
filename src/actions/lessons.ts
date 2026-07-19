@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { checkAndUnlockAchievements } from "./achievements";
 
 export async function getLessonContent(lessonId: string) {
   const supabase = await createClient();
@@ -102,8 +103,11 @@ export async function completeLesson(lessonId: string, courseId: string) {
     });
   }
 
+  const newAchievements = await checkAndUnlockAchievements();
+
   revalidatePath("/student");
   revalidatePath(`/student/courses`);
+  revalidatePath("/student/achievements");
 
-  return { already: false, xpEarned: xp };
+  return { already: false, xpEarned: xp, newAchievements };
 }
