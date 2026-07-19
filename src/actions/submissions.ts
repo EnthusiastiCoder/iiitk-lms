@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { logInfo, logError } from "@/lib/logger";
 
 export async function submitQuizAttempt(
   quizId: string,
@@ -41,6 +42,7 @@ export async function submitQuizAttempt(
     });
   }
 
+  logInfo("quiz.submit", { userId: user.id, quizId, score, xpEarned: xp });
   revalidatePath("/student/practice");
   return { score, xpEarned: xp };
 }
@@ -64,6 +66,7 @@ export async function submitAssignment(
     file_urls: fileUrls?.length ? fileUrls : null,
   });
 
+  logInfo("assignment.submit", { userId: user.id, assignmentId, courseId });
   revalidatePath("/student/submissions");
   return { success: true };
 }
@@ -87,6 +90,7 @@ export async function submitProject(
     file_urls: fileUrls?.length ? fileUrls : null,
   });
 
+  logInfo("project.submit", { userId: user.id, projectId, courseId });
   revalidatePath("/student/submissions");
   return { success: true };
 }
@@ -112,6 +116,7 @@ export async function gradeSubmission(
     })
     .eq("id", submissionId);
 
+  logInfo("submission.grade", { gradedBy: user.id, submissionId, table, grade });
   revalidatePath("/professor/grading");
   return { success: true };
 }
