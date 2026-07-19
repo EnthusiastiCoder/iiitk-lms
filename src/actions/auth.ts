@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
+import { logInfo, logError, logWarn } from "@/lib/logger";
 
 export async function login(prevState: { error: string } | null, formData: FormData) {
   const email = formData.get("email") as string;
@@ -15,6 +16,7 @@ export async function login(prevState: { error: string } | null, formData: FormD
 
   const { success } = rateLimit(email, 5, 60000);
   if (!success) {
+    logWarn("auth.login.rate_limited", { email });
     return { error: "Too many attempts. Please try again in a minute." };
   }
 
@@ -22,9 +24,11 @@ export async function login(prevState: { error: string } | null, formData: FormD
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
+    logWarn("auth.login.failed", { email, reason: error.message });
     return { error: error.message };
   }
 
+  logInfo("auth.login.success", { email });
   revalidatePath("/", "layout");
   redirect("/student");
 }
@@ -48,6 +52,7 @@ export async function register(
 
   const { success } = rateLimit(email, 5, 60000);
   if (!success) {
+    logWarn("auth.register.rate_limited", { email });
     return { error: "Too many attempts. Please try again in a minute." };
   }
 
@@ -65,21 +70,26 @@ export async function register(
   });
 
   if (error) {
+    logError("auth.register.failed", error.message, { email, role });
     return { error: error.message };
   }
 
   // If email confirmation is required, the user object exists but
   // the session will be null (identities may be empty too).
   if (data.user && !data.session) {
+    logInfo("auth.register.pending_confirmation", { email, role, userId: data.user.id });
     return { error: "", confirmEmail: true };
   }
 
+  logInfo("auth.register.success", { email, role, userId: data.user?.id });
   revalidatePath("/", "layout");
   redirect("/student");
 }
 
 export async function logout() {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  logInfo("auth.logout", { userId: user?.id });
   await supabase.auth.signOut();
   revalidatePath("/", "layout");
   redirect("/auth/login");
