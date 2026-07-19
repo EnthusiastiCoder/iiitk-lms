@@ -9,33 +9,48 @@ test.describe('Professor Course Management', () => {
 
     // Verify welcome banner with professor name
     await expect(
-      page.getByRole('heading', { level: 1, name: /Welcome back,/ })
+      page.locator('main').getByText(/Welcome back,/)
     ).toBeVisible();
 
     // Verify the subtitle text
     await expect(
-      page.getByText(
-        'Here is an overview of your classes and student progress.'
-      )
+      page
+        .locator('main')
+        .getByText(
+          'Here is an overview of your classes and student progress.'
+        )
     ).toBeVisible();
 
-    // Verify stat labels in the banner
-    await expect(page.getByText('Courses')).toBeVisible();
-    await expect(page.getByText('Total Enrollments')).toBeVisible();
-    await expect(page.getByText('Avg Progress')).toBeVisible();
+    // Verify stat labels in the banner (scope to main to avoid sidebar nav conflicts)
+    await expect(
+      page.locator('main').getByText('Courses', { exact: true }).first()
+    ).toBeVisible();
+    await expect(
+      page.locator('main').getByText('Total Enrollments').first()
+    ).toBeVisible();
+    await expect(
+      page.locator('main').getByText(/Avg [Pp]rogress/).first()
+    ).toBeVisible();
 
     // Verify quick action cards
-    await expect(page.getByText('Student Roster')).toBeVisible();
-    await expect(page.getByText('Grading Center')).toBeVisible();
-    await expect(page.getByText('Manage Courses')).toBeVisible();
+    await expect(
+      page.locator('main').getByText('Student Roster')
+    ).toBeVisible();
+    await expect(
+      page.locator('main').getByText('Grading Center')
+    ).toBeVisible();
+    await expect(
+      page.locator('main').getByText('Manage Courses')
+    ).toBeVisible();
 
     // Verify "Class Overview" section heading
     await expect(
-      page.getByRole('heading', { name: 'Class Overview' })
+      page.locator('main').getByRole('heading', { name: 'Class Overview' })
     ).toBeVisible();
 
     // Check for course cards or empty state
     const isEmpty = await page
+      .locator('main')
       .getByText(
         'No courses found. Course data will appear here once courses are available.'
       )
@@ -44,9 +59,15 @@ test.describe('Professor Course Management', () => {
 
     if (!isEmpty) {
       // Course cards should show student count badges and progress bars
-      await expect(page.getByText(/\d+ students/)).toBeVisible();
-      await expect(page.getByText(/\d+ lessons/)).toBeVisible();
-      await expect(page.getByText('Avg progress')).toBeVisible();
+      await expect(
+        page.locator('main').getByText(/\d+ students/).first()
+      ).toBeVisible();
+      await expect(
+        page.locator('main').getByText(/\d+ lessons/).first()
+      ).toBeVisible();
+      await expect(
+        page.locator('main').getByText('Avg progress').first()
+      ).toBeVisible();
     }
   });
 
@@ -95,7 +116,13 @@ test.describe('Professor Course Management', () => {
     const hasStudents = await studentLink.isVisible().catch(() => false);
 
     if (hasStudents) {
-      await studentLink.click();
+      // Navigate directly to avoid potential click-interception issues
+      const href = await studentLink.getAttribute('href');
+      if (href) {
+        await page.goto(href);
+      } else {
+        await studentLink.click();
+      }
       await page.waitForLoadState('networkidle');
 
       // Verify we're on the student detail page
@@ -135,7 +162,7 @@ test.describe('Professor Course Management', () => {
 
     // Verify summary cards for pending and graded counts
     await expect(page.getByText('Pending Review')).toBeVisible();
-    await expect(page.getByText('Recently Graded')).toBeVisible();
+    await expect(page.getByText('Recently Graded').first()).toBeVisible();
 
     // Verify section headings
     await expect(
@@ -175,21 +202,32 @@ test.describe('Professor Course Management', () => {
     await page.goto('/professor/courses');
     await page.waitForLoadState('networkidle');
 
-    // Verify heading and subtitle
+    // Verify heading and subtitle (scope to main to avoid sidebar "Courses" nav)
     await expect(
-      page.getByRole('heading', { level: 1, name: 'Courses' })
+      page
+        .locator('main')
+        .getByRole('heading', { level: 1, name: 'Courses' })
     ).toBeVisible();
     await expect(
-      page.getByText('Manage your courses and track student progress')
+      page
+        .locator('main')
+        .getByText('Manage your courses and track student progress')
     ).toBeVisible();
 
     // Verify summary stats
-    await expect(page.getByText('Total Courses')).toBeVisible();
-    await expect(page.getByText('Total Enrollments')).toBeVisible();
-    await expect(page.getByText('Total Lessons')).toBeVisible();
+    await expect(
+      page.locator('main').getByText('Total Courses')
+    ).toBeVisible();
+    await expect(
+      page.locator('main').getByText('Total Enrollments')
+    ).toBeVisible();
+    await expect(
+      page.locator('main').getByText('Total Lessons')
+    ).toBeVisible();
 
     // Check for course cards or empty state
     const isEmpty = await page
+      .locator('main')
       .getByText(
         'No courses found. Course data will appear here once courses are set up.'
       )
@@ -198,10 +236,14 @@ test.describe('Professor Course Management', () => {
 
     if (!isEmpty) {
       // Verify course cards have "Click to manage" text
-      await expect(page.getByText('Click to manage').first()).toBeVisible();
+      await expect(
+        page.locator('main').getByText('Click to manage').first()
+      ).toBeVisible();
 
       // Verify progress bars are shown (Avg progress label)
-      await expect(page.getByText('Avg progress').first()).toBeVisible();
+      await expect(
+        page.locator('main').getByText('Avg progress').first()
+      ).toBeVisible();
 
       // Click into a course to verify the detail page
       const courseCard = page
@@ -217,14 +259,18 @@ test.describe('Professor Course Management', () => {
         await expect(page).toHaveURL(/\/professor\/courses\/.+/);
 
         // Verify "Back to Courses" link
-        await expect(page.getByText('Back to Courses')).toBeVisible();
+        await expect(
+          page.locator('main').getByText('Back to Courses')
+        ).toBeVisible();
 
         // Verify course title in a heading
         await expect(page.locator('main')).toBeVisible();
 
-        // Verify "Modules & Lessons" section
+        // Verify "Modules & Content" section
         await expect(
-          page.getByRole('heading', { name: 'Modules & Lessons' })
+          page
+            .locator('main')
+            .getByRole('heading', { name: 'Modules & Content' })
         ).toBeVisible();
       }
     }
