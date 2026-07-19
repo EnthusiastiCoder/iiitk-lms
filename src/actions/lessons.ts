@@ -17,6 +17,22 @@ export async function getLessonContent(lessonId: string) {
   return data;
 }
 
+export async function getFlashcardDeck(lessonId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("flashcard_decks")
+    .select("id, title, cards")
+    .eq("lesson_id", lessonId)
+    .single();
+
+  if (error) return null;
+  return data as {
+    id: string;
+    title: string;
+    cards: { front: string; back: string }[];
+  };
+}
+
 export async function completeLesson(lessonId: string, courseId: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -60,9 +76,13 @@ export async function completeLesson(lessonId: string, courseId: string) {
     .eq("user_id", user.id)
     .single();
 
+  let leveledUp = false;
+  let newLevel = stats?.level ?? 1;
+
   if (stats) {
     const newXp = stats.total_xp + xp;
-    const newLevel = Math.floor(newXp / 500) + 1;
+    newLevel = Math.floor(newXp / 500) + 1;
+    leveledUp = newLevel > stats.level;
     const tier = newLevel < 8 ? "bronze" : newLevel < 15 ? "silver" : newLevel < 22 ? "gold" : "diamond";
 
     await supabase
@@ -111,5 +131,5 @@ export async function completeLesson(lessonId: string, courseId: string) {
   revalidatePath(`/student/courses`);
   revalidatePath("/student/achievements");
 
-  return { already: false, xpEarned: xp, newAchievements };
+  return { already: false, xpEarned: xp, leveledUp, newLevel, newAchievements };
 }
