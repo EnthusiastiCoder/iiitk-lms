@@ -26,7 +26,7 @@ export default async function ProjectPage({
   if (user) {
     const { data } = await supabase
       .from("project_submissions")
-      .select("code, status, grade, feedback, submitted_at")
+      .select("id, code, status, grade, feedback, submitted_at, file_urls")
       .eq("project_id", projectId)
       .eq("user_id", user.id)
       .order("submitted_at", { ascending: false })
