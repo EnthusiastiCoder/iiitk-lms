@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { FadeIn } from "@/components/motion/fade-in";
+import { ProfileEditor } from "@/components/profile/ProfileEditor";
 
 const tierConfig: Record<string, { color: string; label: string }> = {
   bronze: { color: "var(--color-tier-bronze)", label: "Bronze" },
@@ -126,6 +127,10 @@ export default async function ProfilePage() {
                     {tier.label}
                   </Badge>
                   <Badge variant="secondary">Level {level}</Badge>
+                  <ProfileEditor
+                    currentName={userName}
+                    email={profile?.email ?? ""}
+                  />
                 </div>
               </div>
 
