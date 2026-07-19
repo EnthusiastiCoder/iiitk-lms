@@ -1,8 +1,9 @@
-import { getCourseWithModules, getUserCompletions } from "@/actions/courses";
+import { getCourseWithModules, getUserCompletions, getUserEnrollments } from "@/actions/courses";
 import { notFound } from "next/navigation";
 import { BookOpen, Clock, Zap, BarChart3 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CourseModules } from "@/components/courses/CourseModules";
+import { EnrollButton } from "@/components/courses/EnrollButton";
 
 export default async function CourseDetailPage({
   params,
@@ -13,7 +14,11 @@ export default async function CourseDetailPage({
   const course = await getCourseWithModules(courseSlug);
   if (!course) notFound();
 
-  const completions = await getUserCompletions(course.id);
+  const [completions, enrollments] = await Promise.all([
+    getUserCompletions(course.id),
+    getUserEnrollments(),
+  ]);
+  const isEnrolled = enrollments.some((e: any) => e.course_id === course.id);
   const completedIds = new Set(completions.map((c: any) => c.lesson_id));
   const totalLessons =
     course.total_lessons ??
@@ -92,44 +97,53 @@ export default async function CourseDetailPage({
         {/* Sidebar */}
         <div>
           <div className="sticky top-4 space-y-4">
-            {/* Progress Ring */}
-            <div className="bg-card rounded-xl ring-1 ring-foreground/10 p-6 text-center">
-              <div className="relative inline-flex items-center justify-center">
-                <svg
-                  className="w-28 h-28 -rotate-90"
-                  viewBox="0 0 120 120"
-                >
-                  <circle
-                    cx="60"
-                    cy="60"
-                    r="52"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="8"
-                    className="text-muted"
-                  />
-                  <circle
-                    cx="60"
-                    cy="60"
-                    r="52"
-                    fill="none"
-                    stroke={course.accent_color}
-                    strokeWidth="8"
-                    strokeLinecap="round"
-                    strokeDasharray={2 * Math.PI * 52}
-                    strokeDashoffset={
-                      2 * Math.PI * 52 * (1 - progressPercent / 100)
-                    }
-                  />
-                </svg>
-                <span className="absolute text-2xl font-bold">
-                  {progressPercent}%
-                </span>
+            {/* Enroll Button or Progress Ring */}
+            {!isEnrolled ? (
+              <div className="bg-card rounded-xl ring-1 ring-foreground/10 p-6 text-center space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  You are not enrolled in this course yet.
+                </p>
+                <EnrollButton courseId={course.id} />
               </div>
-              <p className="text-sm text-muted-foreground mt-3">
-                {completedCount} of {totalLessons} lessons completed
-              </p>
-            </div>
+            ) : (
+              <div className="bg-card rounded-xl ring-1 ring-foreground/10 p-6 text-center">
+                <div className="relative inline-flex items-center justify-center">
+                  <svg
+                    className="w-28 h-28 -rotate-90"
+                    viewBox="0 0 120 120"
+                  >
+                    <circle
+                      cx="60"
+                      cy="60"
+                      r="52"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="8"
+                      className="text-muted"
+                    />
+                    <circle
+                      cx="60"
+                      cy="60"
+                      r="52"
+                      fill="none"
+                      stroke={course.accent_color}
+                      strokeWidth="8"
+                      strokeLinecap="round"
+                      strokeDasharray={2 * Math.PI * 52}
+                      strokeDashoffset={
+                        2 * Math.PI * 52 * (1 - progressPercent / 100)
+                      }
+                    />
+                  </svg>
+                  <span className="absolute text-2xl font-bold">
+                    {progressPercent}%
+                  </span>
+                </div>
+                <p className="text-sm text-muted-foreground mt-3">
+                  {completedCount} of {totalLessons} lessons completed
+                </p>
+              </div>
+            )}
 
             {/* Prerequisites */}
             {course.prerequisites && course.prerequisites.length > 0 && (
