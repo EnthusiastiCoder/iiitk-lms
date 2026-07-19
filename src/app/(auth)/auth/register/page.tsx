@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import Link from "next/link";
-import { Mail, Lock, User, GraduationCap, Loader2 } from "lucide-react";
+import { Mail, Lock, User, GraduationCap, Loader2, CheckCircle2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,34 @@ import { register } from "@/actions/auth";
 export default function RegisterPage() {
   const [state, formAction, isPending] = useActionState(register, null);
   const [role, setRole] = useState("student");
+
+  if (state?.confirmEmail) {
+    return (
+      <Card className="w-full border-0 bg-card/80 backdrop-blur-sm">
+        <CardContent className="pt-6">
+          <div className="flex flex-col items-center gap-4 py-4 text-center">
+            <div className="p-3 rounded-full bg-brand/10">
+              <CheckCircle2 className="h-8 w-8 text-[#58CC02]" />
+            </div>
+            <h2 className="text-lg font-semibold text-foreground">
+              Check your email
+            </h2>
+            <p className="text-sm text-muted-foreground max-w-xs">
+              We sent a confirmation link to your email address. Please check
+              your inbox and click the link to activate your account.
+            </p>
+            <Link
+              href="/auth/login"
+              className="mt-2 inline-flex items-center gap-2 text-sm font-medium text-[#58CC02] hover:underline"
+            >
+              <Mail className="h-4 w-4" />
+              Back to Sign In
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="w-full border-0 bg-card/80 backdrop-blur-sm">
