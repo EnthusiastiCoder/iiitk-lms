@@ -1,4 +1,9 @@
+import type { Metadata } from "next";
 import { getPendingSubmissions, getRecentGraded } from "@/actions/professor";
+
+export const metadata: Metadata = {
+  title: "Grading | IIIT Kalyani LMS",
+};
 import {
   Card,
   CardContent,
@@ -14,6 +19,7 @@ import {
   FileText,
   FolderKanban,
 } from "lucide-react";
+import { GradeDialog } from "@/components/professor/GradeDialog";
 
 export default async function GradingPage() {
   let pending: any = { assignments: [], projects: [] };
@@ -107,9 +113,13 @@ export default async function GradingPage() {
                             : "N/A"}
                         </p>
                       </div>
-                      <Badge variant="secondary" className="bg-amber-500/10 text-amber-600">
-                        Pending
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <GradeDialog
+                          submissionId={sub.id}
+                          studentName={sub.profiles?.full_name ?? "Unknown Student"}
+                          submissionType="assignment_submissions"
+                        />
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
@@ -138,9 +148,13 @@ export default async function GradingPage() {
                             : "N/A"}
                         </p>
                       </div>
-                      <Badge variant="secondary" className="bg-amber-500/10 text-amber-600">
-                        Pending
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <GradeDialog
+                          submissionId={sub.id}
+                          studentName={sub.profiles?.full_name ?? "Unknown Student"}
+                          submissionType="project_submissions"
+                        />
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
