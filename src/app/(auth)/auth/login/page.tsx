@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Mail, Lock, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,6 +11,8 @@ import { login } from "@/actions/auth";
 
 export default function LoginPage() {
   const [state, formAction, isPending] = useActionState(login, null);
+  const searchParams = useSearchParams();
+  const urlError = searchParams.get("error");
 
   return (
     <Card className="w-full border-0 bg-card/80 backdrop-blur-sm">
@@ -49,9 +52,9 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {state?.error && (
+          {(state?.error || urlError) && (
             <div className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              {state.error}
+              {state?.error || urlError}
             </div>
           )}
 
