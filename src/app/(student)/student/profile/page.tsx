@@ -1,5 +1,10 @@
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { getUserEnrollments, getUserCompletions, getCourses } from "@/actions/courses";
+
+export const metadata: Metadata = {
+  title: "Profile | IIIT Kalyani LMS",
+};
 import {
   User,
   Zap,

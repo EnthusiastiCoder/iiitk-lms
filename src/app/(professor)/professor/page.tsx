@@ -1,5 +1,10 @@
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { getClassStats } from "@/actions/professor";
+
+export const metadata: Metadata = {
+  title: "Professor Dashboard | IIIT Kalyani LMS",
+};
 import {
   Card,
   CardContent,
