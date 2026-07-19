@@ -55,7 +55,7 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
           <div key={wi} className="flex flex-col gap-[2px]">
             {week.map((day) => (
               <Tooltip key={day.date}>
-                <TooltipTrigger asChild>
+                <TooltipTrigger>
                   <div
                     className="w-[10px] h-[10px] rounded-[2px] transition-colors"
                     style={{ backgroundColor: getColor(day.xp) }}
