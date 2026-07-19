@@ -1,5 +1,10 @@
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { getLeaderboard } from "@/actions/gamification";
+
+export const metadata: Metadata = {
+  title: "Leaderboard | IIIT Kalyani LMS",
+};
 import { Medal, Trophy, Flame, Zap } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
