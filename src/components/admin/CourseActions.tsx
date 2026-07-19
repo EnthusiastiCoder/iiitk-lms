@@ -71,7 +71,7 @@ export function CourseActions({
         <Select
           value={currentInstructorId ?? "unassigned"}
           onValueChange={(v) => {
-            if (v !== "unassigned") handleInstructorChange(v);
+            if (v && v !== "unassigned") handleInstructorChange(v);
           }}
           disabled={isPending}
         >

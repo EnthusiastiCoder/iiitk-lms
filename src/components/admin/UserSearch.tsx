@@ -51,7 +51,7 @@ export function UserSearch({
           className="pl-9"
         />
       </div>
-      <Select value={role} onValueChange={handleRoleChange}>
+      <Select value={role} onValueChange={(v) => v && handleRoleChange(v)}>
         <SelectTrigger className="w-[140px]">
           <SelectValue placeholder="All roles" />
         </SelectTrigger>

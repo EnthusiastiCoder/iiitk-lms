@@ -120,7 +120,7 @@ export function CreateCourseDialog() {
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">
                   Difficulty
                 </label>
-                <Select value={difficulty} onValueChange={setDifficulty}>
+                <Select value={difficulty} onValueChange={(v) => v && setDifficulty(v)}>
                   <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>

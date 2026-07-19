@@ -62,7 +62,7 @@ export function UserActions({
 
   return (
     <div className="flex items-center gap-2">
-      <Select value={currentRole} onValueChange={handleRoleChange} disabled={isPending}>
+      <Select value={currentRole} onValueChange={(v: string | null) => { if (v) handleRoleChange(v); }} disabled={isPending}>
         <SelectTrigger className="w-[110px] h-7 text-xs">
           <SelectValue />
         </SelectTrigger>
