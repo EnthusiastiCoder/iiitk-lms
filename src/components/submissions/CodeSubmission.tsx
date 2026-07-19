@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef } from "react";
 import Link from "next/link";
 import { submitAssignment, submitProject } from "@/actions/submissions";
+import { addFileToSubmission } from "@/actions/upload";
+import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,11 +13,16 @@ import {
   CheckCircle2,
   Clock,
   Code2,
+  Download,
+  FileUp,
   Loader2,
+  Paperclip,
   Send,
+  Trash2,
   Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CodeEditor } from "@/components/editor/CodeEditor";
 
 interface CodeSubmissionProps {
   itemId: string;
@@ -31,13 +38,18 @@ interface CodeSubmissionProps {
   dueDate: string | null;
   type: "assignment" | "project";
   existingSubmission?: {
+    id: string;
     code: string;
     status: string;
     grade: number | null;
     feedback: string | null;
     submitted_at: string;
+    file_urls: string[] | null;
   } | null;
 }
+
+const ACCEPTED_FILE_TYPES = ".pdf,.png,.jpg,.jpeg,.gif,.zip";
+const MAX_FILE_SIZE_MB = 10;
 
 export function CodeSubmission({
   itemId,
@@ -59,14 +71,99 @@ export function CodeSubmission({
   );
   const [isPending, startTransition] = useTransition();
   const [submitted, setSubmitted] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<string[]>(
+    existingSubmission?.file_urls ?? []
+  );
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const submissionTable =
+    type === "assignment"
+      ? ("assignment_submissions" as const)
+      : ("project_submissions" as const);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const file = files[0];
+    if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+      alert(`File must be smaller than ${MAX_FILE_SIZE_MB}MB`);
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const supabase = createClient();
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
+      if (!userId) return;
+
+      const ext = file.name.split(".").pop();
+      const filePath = `${userId}/${itemId}/${Date.now()}-${file.name}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("submissions")
+        .upload(filePath, file);
+
+      if (uploadError) {
+        console.error("Upload failed:", uploadError);
+        alert("File upload failed. Please try again.");
+        return;
+      }
+
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("submissions").getPublicUrl(filePath);
+
+      // If there's an existing submission, persist to DB immediately
+      if (existingSubmission?.id) {
+        await addFileToSubmission(
+          existingSubmission.id,
+          submissionTable,
+          filePath
+        );
+      }
+
+      setUploadedFiles((prev) => [...prev, filePath]);
+    } catch (err) {
+      console.error("Upload error:", err);
+      alert("File upload failed. Please try again.");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleRemoveFile = async (filePath: string) => {
+    const supabase = createClient();
+    await supabase.storage.from("submissions").remove([filePath]);
+    setUploadedFiles((prev) => prev.filter((f) => f !== filePath));
+  };
+
+  const getFileName = (filePath: string) => {
+    const parts = filePath.split("/");
+    const name = parts[parts.length - 1];
+    // Strip the timestamp prefix
+    const dashIndex = name.indexOf("-");
+    return dashIndex !== -1 ? name.substring(dashIndex + 1) : name;
+  };
+
+  const getDownloadUrl = (filePath: string) => {
+    const supabase = createClient();
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("submissions").getPublicUrl(filePath);
+    return publicUrl;
+  };
 
   const handleSubmit = () => {
     if (!code.trim()) return;
     startTransition(async () => {
       if (type === "assignment") {
-        await submitAssignment(itemId, courseId, code);
+        await submitAssignment(itemId, courseId, code, uploadedFiles);
       } else {
-        await submitProject(itemId, courseId, code);
+        await submitProject(itemId, courseId, code, uploadedFiles);
       }
       setSubmitted(true);
     });
@@ -206,15 +303,88 @@ export function CodeSubmission({
             <label className="text-sm font-medium">
               {isAlreadySubmitted ? "Update your code" : "Your Code"}
             </label>
-            <textarea
+            <CodeEditor
               value={code}
-              onChange={(e) => setCode(e.target.value)}
-              placeholder={`Write your ${language} code here...`}
-              rows={20}
-              className="w-full rounded-xl bg-zinc-900 text-zinc-100 font-mono text-sm p-4 border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-brand resize-y min-h-[300px] placeholder:text-zinc-500"
-              spellCheck={false}
+              onChange={setCode}
+              language={language}
+              height="500px"
             />
           </div>
+
+          {/* File Upload */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Paperclip className="h-4 w-4" />
+                Supporting Files
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center gap-3">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept={ACCEPTED_FILE_TYPES}
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  id="file-upload"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                >
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <FileUp className="h-4 w-4" />
+                      Upload File
+                    </>
+                  )}
+                </Button>
+                <span className="text-xs text-muted-foreground">
+                  PDF, images, or ZIP. Max {MAX_FILE_SIZE_MB}MB.
+                </span>
+              </div>
+
+              {uploadedFiles.length > 0 && (
+                <ul className="space-y-2">
+                  {uploadedFiles.map((filePath) => (
+                    <li
+                      key={filePath}
+                      className="flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm"
+                    >
+                      <span className="truncate flex-1 min-w-0">
+                        {getFileName(filePath)}
+                      </span>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <a
+                          href={getDownloadUrl(filePath)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-muted-foreground hover:text-foreground transition-colors p-1"
+                        >
+                          <Download className="h-4 w-4" />
+                        </a>
+                        <button
+                          onClick={() => handleRemoveFile(filePath)}
+                          className="text-muted-foreground hover:text-destructive transition-colors p-1"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
 
           <div className="flex items-center justify-between">
             <Link href={`/student/courses/${courseSlug}`}>

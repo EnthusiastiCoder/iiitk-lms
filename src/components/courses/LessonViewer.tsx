@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { completeLesson } from "@/actions/lessons";
+import { CodeEditor } from "@/components/editor/CodeEditor";
 import { FlashcardDeck } from "@/components/flashcard/FlashcardDeck";
 import { XpCelebration } from "@/components/xp/XpCelebration";
 
@@ -375,6 +376,7 @@ function SectionRenderer({ section }: { section: ContentSection }) {
   }
 
   if (section.type === "code") {
+    const codeValue = section.code ?? section.content ?? "";
     return (
       <div className="rounded-lg overflow-hidden ring-1 ring-foreground/10">
         {section.language && (
@@ -382,11 +384,13 @@ function SectionRenderer({ section }: { section: ContentSection }) {
             {section.language}
           </div>
         )}
-        <pre className="bg-muted/50 p-4 overflow-x-auto">
-          <code className="text-sm font-mono leading-relaxed text-foreground/90">
-            {section.code ?? section.content}
-          </code>
-        </pre>
+        <CodeEditor
+          value={codeValue}
+          onChange={() => {}}
+          language={section.language}
+          readOnly={true}
+          height="auto"
+        />
       </div>
     );
   }
