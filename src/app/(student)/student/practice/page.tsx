@@ -1,5 +1,10 @@
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { getUserEnrollments } from "@/actions/courses";
+
+export const metadata: Metadata = {
+  title: "Practice | IIIT Kalyani LMS",
+};
 import {
   ClipboardList,
   CheckCircle2,

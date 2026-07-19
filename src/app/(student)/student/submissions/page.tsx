@@ -1,4 +1,9 @@
+import type { Metadata } from "next";
 import { getUserSubmissions } from "@/actions/submissions";
+
+export const metadata: Metadata = {
+  title: "Submissions | IIIT Kalyani LMS",
+};
 import { Send, FileCode, FolderCode, ClipboardCheck } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
