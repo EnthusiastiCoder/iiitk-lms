@@ -26,7 +26,7 @@ export default async function AssignmentPage({
   if (user) {
     const { data } = await supabase
       .from("assignment_submissions")
-      .select("code, status, grade, feedback, submitted_at")
+      .select("id, code, status, grade, feedback, submitted_at, file_urls")
       .eq("assignment_id", assignmentId)
       .eq("user_id", user.id)
       .order("submitted_at", { ascending: false })
