@@ -1,5 +1,10 @@
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { getUserCompletions } from "@/actions/courses";
+
+export const metadata: Metadata = {
+  title: "Skill Tree | IIIT Kalyani LMS",
+};
 import { Route } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { FadeIn } from "@/components/motion/fade-in";
