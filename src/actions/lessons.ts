@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { checkAndUnlockAchievements } from "./achievements";
 import { updateStreakStats } from "./streaks";
+import { logInfo, logError } from "@/lib/logger";
 
 export async function getLessonContent(lessonId: string) {
   const supabase = await createClient();
@@ -45,7 +46,10 @@ export async function completeLesson(lessonId: string, courseId: string) {
     .eq("lesson_id", lessonId)
     .single();
 
-  if (existing) return { already: true, xpEarned: 0 };
+  if (existing) {
+    logInfo("lesson.complete.already", { userId: user.id, lessonId, courseId });
+    return { already: true, xpEarned: 0 };
+  }
 
   const { data: lesson } = await supabase
     .from("lessons")
@@ -130,6 +134,11 @@ export async function completeLesson(lessonId: string, courseId: string) {
   revalidatePath("/student");
   revalidatePath(`/student/courses`);
   revalidatePath("/student/achievements");
+
+  logInfo("lesson.complete", { userId: user.id, lessonId, courseId, xpEarned: xp, leveledUp, newLevel });
+  if (newAchievements.length > 0) {
+    logInfo("achievement.unlocked", { userId: user.id, achievements: newAchievements });
+  }
 
   return { already: false, xpEarned: xp, leveledUp, newLevel, newAchievements };
 }

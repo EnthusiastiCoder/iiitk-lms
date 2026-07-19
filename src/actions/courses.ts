@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { logInfo, logError } from "@/lib/logger";
 
 export async function getCourses() {
   const supabase = await createClient();
@@ -118,8 +119,12 @@ export async function enrollInCourse(courseId: string) {
     .from("enrollments")
     .insert({ user_id: user.id, course_id: courseId });
 
-  if (error && !error.message.includes("duplicate")) throw new Error(error.message);
+  if (error && !error.message.includes("duplicate")) {
+    logError("course.enroll.failed", error.message, { userId: user.id, courseId });
+    throw new Error(error.message);
+  }
 
+  logInfo("course.enroll", { userId: user.id, courseId });
   revalidatePath("/student");
   revalidatePath("/student/courses");
 }
