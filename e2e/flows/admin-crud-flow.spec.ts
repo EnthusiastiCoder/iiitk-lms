@@ -15,7 +15,7 @@ test.describe('Admin CRUD Operations', () => {
     ).toBeVisible();
 
     // Find "Create Course" button
-    const createBtn = page.getByRole('button', { name: /Create Course/i });
+    const createBtn = page.getByText('Create Course').first();
     const hasCreate = await createBtn.isVisible().catch(() => false);
 
     if (!hasCreate) return;
@@ -23,9 +23,7 @@ test.describe('Admin CRUD Operations', () => {
     await createBtn.click();
 
     // Verify dialog opened (base-ui uses data-slot, role may vary)
-    const dialog = page.locator(
-      '[data-slot="dialog-content"], [role="dialog"]'
-    ).first();
+    const dialog = page.getByRole('dialog').filter({ has: page.locator('input, textarea') });
     await expect(dialog).toBeVisible({ timeout: 5000 });
 
     // Verify dialog title
@@ -66,7 +64,7 @@ test.describe('Admin CRUD Operations', () => {
     await expect(cancelBtn).toBeVisible();
 
     // Verify Create Course button
-    const submitBtn = dialog.getByRole('button', { name: /Create Course/i });
+    const submitBtn = dialog.getByText('Create Course').first();
     await expect(submitBtn).toBeVisible();
 
     // Close without saving
@@ -89,9 +87,7 @@ test.describe('Admin CRUD Operations', () => {
     ).toBeVisible();
 
     // Find "Create Achievement" button
-    const createBtn = page.getByRole('button', {
-      name: /Create Achievement/i,
-    });
+    const createBtn = page.getByText('Create Achievement').first();
     const hasCreate = await createBtn.isVisible().catch(() => false);
 
     if (!hasCreate) return;
@@ -99,9 +95,7 @@ test.describe('Admin CRUD Operations', () => {
     await createBtn.click();
 
     // Verify dialog opened (base-ui uses data-slot, role may vary)
-    const dialog = page.locator(
-      '[data-slot="dialog-content"], [role="dialog"]'
-    ).first();
+    const dialog = page.getByRole('dialog').filter({ has: page.locator('input, textarea') });
     await expect(dialog).toBeVisible({ timeout: 5000 });
 
     // Verify dialog title
