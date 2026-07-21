@@ -1,0 +1,9 @@
+User-agent: *
+Disallow: /student/
+Disallow: /professor/
+Disallow: /admin/
+Disallow: /api/
+Allow: /auth/login
+Allow: /auth/register
+Allow: /
+Sitemap: https://iiitk-lms.vercel.app/sitemap.xml
