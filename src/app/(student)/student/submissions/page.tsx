@@ -10,6 +10,18 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { FadeIn } from "@/components/motion/fade-in";
 
+interface SubmissionBase {
+  id: string;
+  assignment_id?: string;
+  project_id?: string;
+  status: string;
+  grade: number | null;
+  submitted_at: string | null;
+  feedback: string | null;
+}
+
+type SubmissionRow = SubmissionBase & { _type: "assignment" | "project" };
+
 const statusConfig: Record<
   string,
   { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
@@ -84,8 +96,8 @@ export default async function SubmissionsPage() {
   const { assignments, projects } = await getUserSubmissions();
 
   const allSubmissions = [
-    ...assignments.map((a: any) => ({ ...a, _type: "assignment" as const })),
-    ...projects.map((p: any) => ({ ...p, _type: "project" as const })),
+    ...assignments.map((a: SubmissionBase) => ({ ...a, _type: "assignment" as const })),
+    ...projects.map((p: SubmissionBase) => ({ ...p, _type: "project" as const })),
   ].sort(
     (a, b) =>
       new Date(b.submitted_at ?? 0).getTime() -
@@ -145,7 +157,7 @@ export default async function SubmissionsPage() {
             <Card>
               <CardContent className="p-0 px-4">
                 {allSubmissions.length > 0 ? (
-                  allSubmissions.map((sub: any) => (
+                  allSubmissions.map((sub: SubmissionRow) => (
                     <SubmissionRow
                       key={sub.id}
                       title={
@@ -171,7 +183,7 @@ export default async function SubmissionsPage() {
             <Card>
               <CardContent className="p-0 px-4">
                 {pending.length > 0 ? (
-                  pending.map((sub: any) => (
+                  pending.map((sub: SubmissionRow) => (
                     <SubmissionRow
                       key={sub.id}
                       title={
@@ -197,7 +209,7 @@ export default async function SubmissionsPage() {
             <Card>
               <CardContent className="p-0 px-4">
                 {graded.length > 0 ? (
-                  graded.map((sub: any) => (
+                  graded.map((sub: SubmissionRow) => (
                     <SubmissionRow
                       key={sub.id}
                       title={

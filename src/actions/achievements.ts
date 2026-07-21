@@ -1,6 +1,10 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { Logger } from "@/lib/logger";
+
+const log = new Logger("achievements");
+import type { LessonCompletion, Course } from "@/types/database";
 
 export async function checkAndUnlockAchievements() {
   const supabase = await createClient();
@@ -29,18 +33,22 @@ export async function checkAndUnlockAchievements() {
     .select("quiz_id, score")
     .eq("user_id", user.id);
 
+  type CompletionRow = Pick<LessonCompletion, "lesson_id" | "course_id">;
+  type CourseRow = Pick<Course, "id" | "total_lessons">;
+  type QuizAttemptRow = { quiz_id: string; score: number };
+
   const completedLessons = completions?.length ?? 0;
   const completedCourseIds = new Set<string>();
-  const enrolledCourseIds = new Set((completions ?? []).map((c: any) => c.course_id));
+  const enrolledCourseIds = new Set((completions ?? []).map((c: CompletionRow) => c.course_id));
 
-  for (const course of courses ?? []) {
-    const courseCompletions = (completions ?? []).filter((c: any) => c.course_id === course.id).length;
+  for (const course of (courses ?? []) as CourseRow[]) {
+    const courseCompletions = (completions ?? []).filter((c: CompletionRow) => c.course_id === course.id).length;
     if (courseCompletions >= course.total_lessons && course.total_lessons > 0) {
       completedCourseIds.add(course.id);
     }
   }
 
-  const hasHighQuiz = (quizAttempts ?? []).some((a: any) => a.score >= 90);
+  const hasHighQuiz = (quizAttempts ?? []).some((a: QuizAttemptRow) => a.score >= 90);
 
   const checks: { id: string; earned: boolean; progress: number }[] = [
     { id: "ach-first-steps", earned: completedLessons >= 1, progress: Math.min(completedLessons, 1) },
@@ -73,6 +81,7 @@ export async function checkAndUnlockAchievements() {
           .from("user_achievements")
           .update({ earned: true, progress: check.progress, earned_at: new Date().toISOString() })
           .eq("id", existing.id);
+        log.info("unlock", { userId: user.id, achievementId: check.id });
         newlyEarned.push(check.id);
       } else if (existing.earned !== true) {
         await supabase
@@ -88,7 +97,10 @@ export async function checkAndUnlockAchievements() {
         earned: check.earned,
         earned_at: check.earned ? new Date().toISOString() : null,
       });
-      if (check.earned) newlyEarned.push(check.id);
+      if (check.earned) {
+        log.info("unlock", { userId: user.id, achievementId: check.id });
+        newlyEarned.push(check.id);
+      }
     }
   }
 

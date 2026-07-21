@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 interface DeleteConfirmDialogProps {
   title: string;
   description: string;
-  onConfirm: () => Promise<any>;
+  onConfirm: () => Promise<unknown>;
   trigger?: React.ReactNode;
 }
 

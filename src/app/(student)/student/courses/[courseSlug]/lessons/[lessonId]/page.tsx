@@ -1,5 +1,6 @@
 import { getLessonContent, getFlashcardDeck } from "@/actions/lessons";
 import { getCourseWithModules, getUserCompletions } from "@/actions/courses";
+import type { Module, Lesson } from "@/types/database";
 import { notFound } from "next/navigation";
 import { LessonViewer } from "@/components/courses/LessonViewer";
 
@@ -19,16 +20,17 @@ export default async function LessonPage({
   if (!lesson || !course) notFound();
 
   const completions = await getUserCompletions(course.id);
-  const completedIds = completions.map((c: any) => c.lesson_id);
+  const completedIds = completions.map((c: { lesson_id: string }) => c.lesson_id);
 
   // Build flat ordered lesson list for prev/next navigation
+  type ModuleWithLessons = Module & { lessons: Lesson[] };
   const allLessons = course.modules
-    .sort((a: any, b: any) => a.order - b.order)
-    .flatMap((m: any) =>
-      m.lessons.sort((a: any, b: any) => a.order - b.order)
+    .sort((a: ModuleWithLessons, b: ModuleWithLessons) => a.order - b.order)
+    .flatMap((m: ModuleWithLessons) =>
+      m.lessons.sort((a: Lesson, b: Lesson) => a.order - b.order)
     );
 
-  const currentIndex = allLessons.findIndex((l: any) => l.id === lessonId);
+  const currentIndex = allLessons.findIndex((l: Lesson) => l.id === lessonId);
   const prevLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null;
   const nextLesson =
     currentIndex < allLessons.length - 1

@@ -115,8 +115,8 @@ export function EditLessonDialog({
         });
         setOpen(false);
         router.refresh();
-      } catch (err: any) {
-        setError(err.message ?? "Failed to update lesson");
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Failed to update lesson");
       }
     });
   }

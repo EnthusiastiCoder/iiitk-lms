@@ -1,4 +1,9 @@
+import type { Metadata } from "next";
 import { getAllAchievements } from "@/actions/admin";
+
+export const metadata: Metadata = {
+  title: "Achievements | IIIT Kalyani LMS",
+};
 import {
   Card,
   CardContent,
@@ -8,15 +13,12 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Trophy, Zap } from "lucide-react";
 import { CreateAchievementDialog } from "@/components/admin/CreateAchievementDialog";
+import { Logger, safeFetch } from "@/lib/logger";
+
+const log = new Logger("admin-achievements");
 
 export default async function AdminAchievementsPage() {
-  let achievements: any[] = [];
-
-  try {
-    achievements = await getAllAchievements();
-  } catch {
-    // No data
-  }
+  const achievements = await safeFetch(() => getAllAchievements(), log) ?? [];
 
   const rarityColor = (rarity: string) => {
     switch (rarity?.toLowerCase()) {

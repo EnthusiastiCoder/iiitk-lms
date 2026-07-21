@@ -21,6 +21,9 @@ import {
   TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
+import { Logger, safeFetch } from "@/lib/logger";
+
+const log = new Logger("professor-dashboard");
 
 export default async function ProfessorDashboard() {
   const supabase = await createClient();
@@ -34,12 +37,7 @@ export default async function ProfessorDashboard() {
     .eq("id", user!.id)
     .single();
 
-  let courseStats: any[] = [];
-  try {
-    courseStats = await getClassStats();
-  } catch {
-    // No stats available
-  }
+  const courseStats = await safeFetch(() => getClassStats(), log) ?? [];
 
   const totalStudents = courseStats.reduce((sum, c) => sum + c.enrolled, 0);
   const totalCourses = courseStats.length;

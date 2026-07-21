@@ -1,9 +1,17 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import type { UserStats, Profile } from "@/types/database";
+import { Logger } from "@/lib/logger";
+
+const log = new Logger("gamification");
+
+type LeaderboardStats = Pick<UserStats, "user_id" | "total_xp" | "level" | "tier" | "current_streak">;
+type LeaderboardProfile = Pick<Profile, "id" | "full_name" | "username" | "avatar_url">;
 
 export async function getLeaderboard() {
   const supabase = await createClient();
+  log.info("leaderboard.fetch");
   const { data } = await supabase
     .from("user_stats")
     .select("user_id, total_xp, level, tier, current_streak")
@@ -12,15 +20,15 @@ export async function getLeaderboard() {
 
   if (!data || data.length === 0) return [];
 
-  const userIds = data.map((s: any) => s.user_id);
+  const userIds = data.map((s: LeaderboardStats) => s.user_id);
   const { data: profiles } = await supabase
     .from("profiles")
     .select("id, full_name, username, avatar_url")
     .in("id", userIds);
 
-  const profileMap = new Map((profiles ?? []).map((p: any) => [p.id, p]));
+  const profileMap = new Map((profiles ?? []).map((p: LeaderboardProfile) => [p.id, p]));
 
-  return data.map((s: any, i: number) => {
+  return data.map((s: LeaderboardStats, i: number) => {
     const profile = profileMap.get(s.user_id);
     return {
       rank: i + 1,
@@ -40,6 +48,7 @@ export async function getUserAchievements() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { achievements: [], userAchievements: [] };
+  log.info("achievements.fetch", { userId: user.id });
 
   const { data: achievements } = await supabase
     .from("achievements")
@@ -90,7 +99,7 @@ export async function getWeeklyXp() {
     .gte("created_at", weekStart.toISOString());
 
   const weekly = [0, 0, 0, 0, 0, 0, 0];
-  (data ?? []).forEach((tx: any) => {
+  (data ?? []).forEach((tx: { amount: number; created_at: string }) => {
     const day = new Date(tx.created_at).getDay();
     const idx = day === 0 ? 6 : day - 1;
     weekly[idx] += tx.amount;

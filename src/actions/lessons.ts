@@ -4,7 +4,9 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { checkAndUnlockAchievements } from "./achievements";
 import { updateStreakStats } from "./streaks";
-import { logInfo, logError } from "@/lib/logger";
+import { Logger } from "@/lib/logger";
+
+const log = new Logger("lessons");
 
 export async function getLessonContent(lessonId: string) {
   const supabase = await createClient();
@@ -47,7 +49,7 @@ export async function completeLesson(lessonId: string, courseId: string) {
     .single();
 
   if (existing) {
-    logInfo("lesson.complete.already", { userId: user.id, lessonId, courseId });
+    log.info("complete.already", { userId: user.id, lessonId, courseId });
     return { already: true, xpEarned: 0 };
   }
 
@@ -135,9 +137,9 @@ export async function completeLesson(lessonId: string, courseId: string) {
   revalidatePath(`/student/courses`);
   revalidatePath("/student/achievements");
 
-  logInfo("lesson.complete", { userId: user.id, lessonId, courseId, xpEarned: xp, leveledUp, newLevel });
+  log.info("complete", { userId: user.id, lessonId, courseId, xpEarned: xp, leveledUp, newLevel });
   if (newAchievements.length > 0) {
-    logInfo("achievement.unlocked", { userId: user.id, achievements: newAchievements });
+    log.info("achievement.unlocked", { userId: user.id, achievements: newAchievements });
   }
 
   return { already: false, xpEarned: xp, leveledUp, newLevel, newAchievements };

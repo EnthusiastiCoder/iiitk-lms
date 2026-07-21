@@ -1,4 +1,8 @@
+import type { Metadata } from "next";
 import { getAnalyticsData } from "@/actions/admin";
+export const metadata: Metadata = {
+  title: "Analytics | IIIT Kalyani LMS",
+};
 import {
   Card,
   CardContent,
@@ -8,21 +12,48 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { BarChart3, Users, BookOpen, Trophy, Zap } from "lucide-react";
+import { Logger, safeFetch } from "@/lib/logger";
+
+const log = new Logger("admin-analytics");
+
+interface JoinedProfile {
+  full_name: string;
+  email?: string;
+}
+
+interface TopStudent {
+  user_id: string;
+  total_xp: number;
+  level: number;
+  profiles: JoinedProfile | JoinedProfile[] | null;
+}
+
+interface RecentSubmission {
+  id: string;
+  user_id: string;
+  status: string;
+  score: number | null;
+  submitted_at: string | null;
+  profiles: JoinedProfile | JoinedProfile[] | null;
+}
 
 export default async function AdminAnalyticsPage() {
-  let data = {
+  const defaultData = {
     userGrowth: [] as { month: string; count: number }[],
     courseEnrollments: [] as { title: string; count: number }[],
     maxEnrollment: 1,
-    topStudents: [] as any[],
-    recentSubmissions: [] as any[],
+    topStudents: [] as TopStudent[],
+    recentSubmissions: [] as RecentSubmission[],
   };
 
-  try {
-    data = await getAnalyticsData();
-  } catch {
-    // No data
-  }
+  const result = await safeFetch(() => getAnalyticsData(), log);
+  const data = result
+    ? {
+        ...result,
+        topStudents: result.topStudents as TopStudent[],
+        recentSubmissions: result.recentSubmissions as RecentSubmission[],
+      }
+    : defaultData;
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 h-full overflow-y-auto">
@@ -149,8 +180,8 @@ export default async function AdminAnalyticsPage() {
               </p>
             ) : (
               <div className="space-y-2">
-                {data.topStudents.map((student: any, i: number) => {
-                  const profile = student.profiles;
+                {data.topStudents.map((student: TopStudent, i: number) => {
+                  const profile = Array.isArray(student.profiles) ? student.profiles[0] : student.profiles;
                   return (
                     <div
                       key={student.user_id}
@@ -234,13 +265,13 @@ export default async function AdminAnalyticsPage() {
                   </thead>
                   <tbody>
                     {data.recentSubmissions.map(
-                      (sub: any, i: number) => (
+                      (sub: RecentSubmission, i: number) => (
                         <tr
                           key={sub.id ?? i}
                           className="border-b last:border-0 hover:bg-muted/50 transition-colors"
                         >
                           <td className="p-3 text-sm">
-                            {sub.profiles?.full_name ?? "Unknown"}
+                            {(Array.isArray(sub.profiles) ? sub.profiles[0]?.full_name : sub.profiles?.full_name) ?? "Unknown"}
                           </td>
                           <td className="p-3">
                             <Badge

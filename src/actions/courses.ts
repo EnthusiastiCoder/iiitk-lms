@@ -2,7 +2,10 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { logInfo, logError } from "@/lib/logger";
+import { Logger } from "@/lib/logger";
+
+const log = new Logger("courses");
+import type { Module, Lesson, Quiz, Assignment, Project } from "@/types/database";
 
 export async function getCourses() {
   const supabase = await createClient();
@@ -69,14 +72,19 @@ export async function getCourseWithModules(slug: string) {
       .eq("course_id", course.id),
   ]);
 
+  type LessonRow = Pick<Lesson, "id" | "module_id" | "title" | "description" | "order" | "type" | "estimated_minutes" | "xp_reward">;
+  type QuizRow = Pick<Quiz, "id" | "module_id" | "title" | "description" | "question_count" | "xp_reward"> & { time_limit: number };
+  type AssignmentRow = Pick<Assignment, "id" | "module_id" | "title" | "description" | "difficulty" | "xp_reward" | "language" | "due_date">;
+  type ProjectRow = Pick<Project, "id" | "module_id" | "title" | "description" | "difficulty" | "xp_reward" | "language"> & { is_final_project: boolean };
+
   return {
     ...course,
-    modules: (modules ?? []).map((m: any) => ({
+    modules: (modules ?? []).map((m: Module) => ({
       ...m,
-      lessons: (lessons ?? []).filter((l: any) => l.module_id === m.id),
-      quizzes: (quizzes ?? []).filter((q: any) => q.module_id === m.id),
-      assignments: (assignments ?? []).filter((a: any) => a.module_id === m.id),
-      projects: (projects ?? []).filter((p: any) => p.module_id === m.id),
+      lessons: (lessons ?? []).filter((l: LessonRow) => l.module_id === m.id),
+      quizzes: (quizzes ?? []).filter((q: QuizRow) => q.module_id === m.id),
+      assignments: (assignments ?? []).filter((a: AssignmentRow) => a.module_id === m.id),
+      projects: (projects ?? []).filter((p: ProjectRow) => p.module_id === m.id),
     })),
   };
 }
@@ -120,11 +128,11 @@ export async function enrollInCourse(courseId: string) {
     .insert({ user_id: user.id, course_id: courseId });
 
   if (error && !error.message.includes("duplicate")) {
-    logError("course.enroll.failed", error.message, { userId: user.id, courseId });
+    log.error(error.message, { userId: user.id, courseId });
     throw new Error(error.message);
   }
 
-  logInfo("course.enroll", { userId: user.id, courseId });
+  log.info("enroll", { userId: user.id, courseId });
   revalidatePath("/student");
   revalidatePath("/student/courses");
 }

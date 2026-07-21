@@ -96,8 +96,8 @@ export function CreateLessonDialog({
         setOpen(false);
         resetForm();
         router.refresh();
-      } catch (err: any) {
-        setError(err.message ?? "Failed to create lesson");
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Failed to create lesson");
       }
     });
   };

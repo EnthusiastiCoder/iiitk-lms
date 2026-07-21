@@ -1,4 +1,9 @@
+import type { Metadata } from "next";
 import { getUserList } from "@/actions/admin";
+
+export const metadata: Metadata = {
+  title: "User Management | IIIT Kalyani LMS",
+};
 import {
   Card,
   CardContent,
@@ -9,6 +14,10 @@ import { Users, Shield } from "lucide-react";
 import Link from "next/link";
 import { UserSearch } from "@/components/admin/UserSearch";
 import { UserActions } from "@/components/admin/UserActions";
+import { Logger, safeFetch } from "@/lib/logger";
+import type { Profile, UserStats } from "@/types/database";
+
+const log = new Logger("admin-users");
 
 export default async function UsersPage({
   searchParams,
@@ -21,15 +30,9 @@ export default async function UsersPage({
   const page = parseInt(params.page ?? "0", 10);
   const pageSize = 20;
 
-  let users: any[] = [];
-  let total = 0;
-  try {
-    const result = await getUserList({ search, role, page, pageSize });
-    users = result.users;
-    total = result.total;
-  } catch {
-    // No data
-  }
+  const result = await safeFetch(() => getUserList({ search, role, page, pageSize }), log);
+  const users = result?.users ?? [];
+  const total = result?.total ?? 0;
 
   const totalPages = Math.ceil(total / pageSize);
 
@@ -92,9 +95,9 @@ export default async function UsersPage({
                     </td>
                   </tr>
                 ) : (
-                  users.map((user: any) => {
-                    const stats =
-                      user.user_stats?.[0] ?? user.user_stats;
+                  users.map((user: Profile & { user_stats: UserStats[] | UserStats | null }) => {
+                    const rawStats = user.user_stats;
+                    const stats = Array.isArray(rawStats) ? rawStats[0] : rawStats;
                     const colors = roleBadgeColor(user.role);
                     return (
                       <tr

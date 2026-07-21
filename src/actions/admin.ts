@@ -1,6 +1,10 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { Logger } from "@/lib/logger";
+
+const log = new Logger("admin");
+import type { Profile, Enrollment, Course } from "@/types/database";
 
 async function requireAdmin() {
   const supabase = await createClient();
@@ -43,8 +47,9 @@ export async function getUserList(options?: {
   }
 
   if (options?.search) {
+    const sanitized = options.search.replace(/[%,.*()]/g, "");
     query = query.or(
-      `full_name.ilike.%${options.search}%,email.ilike.%${options.search}%`
+      `full_name.ilike.%${sanitized}%,email.ilike.%${sanitized}%`
     );
   }
 
@@ -76,14 +81,15 @@ export async function getUserById(userId: string) {
   return {
     profile,
     stats,
-    enrolledCourseIds: (enrollments ?? []).map((e: any) => e.course_id),
+    enrolledCourseIds: (enrollments ?? []).map((e: Pick<Enrollment, "course_id">) => e.course_id),
   };
 }
 
 export async function updateUserRole(userId: string, role: string) {
-  const { supabase } = await requireAdmin();
+  const { supabase, user } = await requireAdmin();
 
   if (!["student", "professor", "admin"].includes(role)) {
+    log.warn("role_change.invalid", { adminId: user.id, targetUserId: userId, invalidRole: role });
     throw new Error("Invalid role");
   }
 
@@ -92,7 +98,12 @@ export async function updateUserRole(userId: string, role: string) {
     .update({ role })
     .eq("id", userId);
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    log.error(error.message, { adminId: user.id, targetUserId: userId, newRole: role });
+    throw new Error(error.message);
+  }
+
+  log.info("role_change", { adminId: user.id, targetUserId: userId, newRole: role });
   return { success: true };
 }
 
@@ -100,12 +111,18 @@ export async function deleteUser(userId: string) {
   const { supabase, user } = await requireAdmin();
 
   if (userId === user.id) {
+    log.warn("user_delete.self_attempt", { adminId: user.id });
     throw new Error("Cannot delete your own account");
   }
 
   const { error } = await supabase.from("profiles").delete().eq("id", userId);
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    log.error(error.message, { adminId: user.id, targetUserId: userId });
+    throw new Error(error.message);
+  }
+
+  log.info("user_delete", { adminId: user.id, targetUserId: userId });
   return { success: true };
 }
 
@@ -121,11 +138,11 @@ export async function getSystemStats() {
   ]);
 
   const allProfiles = profiles.data ?? [];
-  const studentCount = allProfiles.filter((p: any) => p.role === "student").length;
-  const professorCount = allProfiles.filter((p: any) => p.role === "professor").length;
-  const adminCount = allProfiles.filter((p: any) => p.role === "admin").length;
+  const studentCount = allProfiles.filter((p: Pick<Profile, "role">) => p.role === "student").length;
+  const professorCount = allProfiles.filter((p: Pick<Profile, "role">) => p.role === "professor").length;
+  const adminCount = allProfiles.filter((p: Pick<Profile, "role">) => p.role === "admin").length;
   const totalXpEarned = (xpStats.data ?? []).reduce(
-    (sum: number, s: any) => sum + (s.total_xp ?? 0),
+    (sum: number, s: { total_xp: number | null }) => sum + (s.total_xp ?? 0),
     0
   );
 
@@ -154,11 +171,11 @@ export async function getAllCourses() {
     .select("course_id");
 
   const enrollmentCounts: Record<string, number> = {};
-  (enrollments ?? []).forEach((e: any) => {
+  (enrollments ?? []).forEach((e: Pick<Enrollment, "course_id">) => {
     enrollmentCounts[e.course_id] = (enrollmentCounts[e.course_id] ?? 0) + 1;
   });
 
-  return (courses ?? []).map((course: any) => ({
+  return (courses ?? []).map((course: Course) => ({
     ...course,
     enrollment_count: enrollmentCounts[course.id] ?? 0,
   }));
@@ -171,7 +188,7 @@ export async function createCourse(data: {
   difficulty?: string;
   category?: string;
 }) {
-  const { supabase } = await requireAdmin();
+  const { supabase, user } = await requireAdmin();
 
   const { error } = await supabase.from("courses").insert({
     title: data.title,
@@ -181,21 +198,31 @@ export async function createCourse(data: {
     category: data.category ?? "general",
   });
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    log.error(error.message, { adminId: user.id, title: data.title });
+    throw new Error(error.message);
+  }
+
+  log.info("course_create", { adminId: user.id, title: data.title, slug: data.slug });
   return { success: true };
 }
 
 export async function deleteCourse(courseId: string) {
-  const { supabase } = await requireAdmin();
+  const { supabase, user } = await requireAdmin();
 
   const { error } = await supabase.from("courses").delete().eq("id", courseId);
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    log.error(error.message, { adminId: user.id, courseId });
+    throw new Error(error.message);
+  }
+
+  log.info("course_delete", { adminId: user.id, courseId });
   return { success: true };
 }
 
 export async function assignInstructor(courseId: string, professorId: string) {
-  const { supabase } = await requireAdmin();
+  const { supabase, user } = await requireAdmin();
 
   const { error } = await supabase
     .from("courses")
@@ -203,6 +230,8 @@ export async function assignInstructor(courseId: string, professorId: string) {
     .eq("id", courseId);
 
   if (error) throw new Error(error.message);
+
+  log.info("assign_instructor", { adminId: user.id, courseId, professorId });
   return { success: true };
 }
 
@@ -225,7 +254,7 @@ export async function createAchievement(data: {
   rarity: string;
   xp_reward: number;
 }) {
-  const { supabase } = await requireAdmin();
+  const { supabase, user } = await requireAdmin();
 
   const { error } = await supabase.from("achievements").insert({
     title: data.title,
@@ -237,6 +266,8 @@ export async function createAchievement(data: {
   });
 
   if (error) throw new Error(error.message);
+
+  log.info("achievement_create", { adminId: user.id, title: data.title, category: data.category });
   return { success: true };
 }
 
@@ -274,7 +305,7 @@ export async function getAnalyticsData() {
     .order("created_at");
 
   const monthCounts: Record<string, number> = {};
-  (allProfiles ?? []).forEach((p: any) => {
+  (allProfiles ?? []).forEach((p: Pick<Profile, "created_at">) => {
     const d = new Date(p.created_at);
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
     monthCounts[key] = (monthCounts[key] ?? 0) + 1;
@@ -295,11 +326,11 @@ export async function getAnalyticsData() {
     .select("course_id");
 
   const enrollmentCounts: Record<string, number> = {};
-  (enrollments ?? []).forEach((e: any) => {
+  (enrollments ?? []).forEach((e: Pick<Enrollment, "course_id">) => {
     enrollmentCounts[e.course_id] = (enrollmentCounts[e.course_id] ?? 0) + 1;
   });
 
-  const courseEnrollments = (courses ?? []).map((c: any) => ({
+  const courseEnrollments = (courses ?? []).map((c: Pick<Course, "id" | "title">) => ({
     title: c.title,
     count: enrollmentCounts[c.id] ?? 0,
   }));

@@ -1,11 +1,15 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { Logger } from "@/lib/logger";
+
+const log = new Logger("streaks");
 
 export async function updateStreakStats() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
+  log.info("streak.calculate", { userId: user.id });
 
   const { data: streakDays } = await supabase
     .from("streak_log")
@@ -16,11 +20,11 @@ export async function updateStreakStats() {
 
   if (!streakDays || streakDays.length === 0) return;
 
-  const dates = streakDays.map((d: any) => d.activity_date);
+  const dates = streakDays.map((d: { activity_date: string }) => d.activity_date);
   const today = new Date().toISOString().slice(0, 10);
 
   let currentStreak = 0;
-  let checkDate = new Date(today);
+  const checkDate = new Date(today);
 
   for (let i = 0; i < 365; i++) {
     const dateStr = checkDate.toISOString().slice(0, 10);

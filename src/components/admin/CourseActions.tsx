@@ -44,8 +44,8 @@ export function CourseActions({
       try {
         await assignInstructor(courseId, professorId);
         router.refresh();
-      } catch (err: any) {
-        alert(err.message ?? "Failed to assign instructor");
+      } catch (err: unknown) {
+        alert(err instanceof Error ? err.message : "Failed to assign instructor");
       }
     });
   };
@@ -56,8 +56,8 @@ export function CourseActions({
         await deleteCourse(courseId);
         setDeleteOpen(false);
         router.refresh();
-      } catch (err: any) {
-        alert(err.message ?? "Failed to delete course");
+      } catch (err: unknown) {
+        alert(err instanceof Error ? err.message : "Failed to delete course");
       }
     });
   };

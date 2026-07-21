@@ -20,21 +20,24 @@ import {
   FolderKanban,
 } from "lucide-react";
 import { GradeDialog } from "@/components/professor/GradeDialog";
+import { Logger, safeFetch } from "@/lib/logger";
+
+interface GradingSubmission {
+  id: string;
+  submitted_at: string | null;
+  graded_at: string | null;
+  grade: number | null;
+  score: number | null;
+  status: string;
+  profiles: { full_name: string } | null;
+}
+
+const log = new Logger("professor-grading");
 
 export default async function GradingPage() {
-  let pending: any = { assignments: [], projects: [] };
-  let graded: any = { assignments: [], projects: [] };
-
-  try {
-    pending = await getPendingSubmissions();
-  } catch {
-    // No data
-  }
-  try {
-    graded = await getRecentGraded();
-  } catch {
-    // No data
-  }
+  const defaultSubmissions = { assignments: [], projects: [] };
+  const pending = await safeFetch(() => getPendingSubmissions(), log) ?? defaultSubmissions;
+  const graded = await safeFetch(() => getRecentGraded(), log) ?? defaultSubmissions;
 
   const totalPending =
     pending.assignments.length + pending.projects.length;
@@ -99,7 +102,7 @@ export default async function GradingPage() {
                 <FileText className="h-3.5 w-3.5" /> Assignments
               </p>
               <div className="space-y-2">
-                {pending.assignments.map((sub: any) => (
+                {pending.assignments.map((sub: GradingSubmission) => (
                   <Card key={sub.id} size="sm">
                     <CardContent className="flex items-center justify-between">
                       <div>
@@ -134,7 +137,7 @@ export default async function GradingPage() {
                 <FolderKanban className="h-3.5 w-3.5" /> Projects
               </p>
               <div className="space-y-2">
-                {pending.projects.map((sub: any) => (
+                {pending.projects.map((sub: GradingSubmission) => (
                   <Card key={sub.id} size="sm">
                     <CardContent className="flex items-center justify-between">
                       <div>
@@ -185,7 +188,7 @@ export default async function GradingPage() {
                 <FileText className="h-3.5 w-3.5" /> Assignments
               </p>
               <div className="space-y-2">
-                {graded.assignments.map((sub: any) => (
+                {graded.assignments.map((sub: GradingSubmission) => (
                   <Card key={sub.id} size="sm">
                     <CardContent className="flex items-center justify-between">
                       <div>
@@ -216,7 +219,7 @@ export default async function GradingPage() {
                 <FolderKanban className="h-3.5 w-3.5" /> Projects
               </p>
               <div className="space-y-2">
-                {graded.projects.map((sub: any) => (
+                {graded.projects.map((sub: GradingSubmission) => (
                   <Card key={sub.id} size="sm">
                     <CardContent className="flex items-center justify-between">
                       <div>

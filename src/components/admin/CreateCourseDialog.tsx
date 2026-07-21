@@ -58,8 +58,8 @@ export function CreateCourseDialog() {
         setDifficulty("beginner");
         setCategory("general");
         router.refresh();
-      } catch (err: any) {
-        alert(err.message ?? "Failed to create course");
+      } catch (err: unknown) {
+        alert(err instanceof Error ? err.message : "Failed to create course");
       }
     });
   };

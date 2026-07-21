@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
 import { getUserAchievements } from "@/actions/gamification";
+import { Logger, safeFetch } from "@/lib/logger";
+
+const log = new Logger("student-achievements");
 
 export const metadata: Metadata = {
   title: "Achievements | IIIT Kalyani LMS",
 };
+import type { Achievement, UserAchievement } from "@/types/database";
 import { Trophy, Lock, Star, Flame, Users, BookOpen, Award } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -31,7 +35,7 @@ function AchievementCard({
   achievement,
   earned,
 }: {
-  achievement: any;
+  achievement: Achievement;
   earned: boolean;
 }) {
   const rarity = achievement.rarity ?? "common";
@@ -62,7 +66,7 @@ function AchievementCard({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <p className="font-semibold text-sm truncate">
-              {achievement.title ?? achievement.name ?? "Achievement"}
+              {achievement.title ?? "Achievement"}
             </p>
             {earned && (
               <Badge
@@ -92,10 +96,10 @@ function AchievementCard({
 }
 
 export default async function AchievementsPage() {
-  const { achievements, userAchievements } = await getUserAchievements();
+  const { achievements, userAchievements } = await safeFetch(() => getUserAchievements(), log) ?? { achievements: [], userAchievements: [] };
 
   const earnedIds = new Set(
-    userAchievements.map((ua: any) => ua.achievement_id)
+    userAchievements.map((ua: UserAchievement) => ua.achievement_id)
   );
   const earnedCount = earnedIds.size;
   const totalCount = achievements.length;
@@ -104,7 +108,7 @@ export default async function AchievementsPage() {
 
   function filterByCategory(cat: string) {
     if (cat === "all") return achievements;
-    return achievements.filter((a: any) => a.category === cat);
+    return achievements.filter((a: Achievement) => a.category === cat);
   }
 
   return (
@@ -154,7 +158,7 @@ export default async function AchievementsPage() {
               <TabsContent key={cat} value={cat}>
                 {items.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {items.map((achievement: any) => (
+                    {items.map((achievement: Achievement) => (
                       <AchievementCard
                         key={achievement.id}
                         achievement={achievement}

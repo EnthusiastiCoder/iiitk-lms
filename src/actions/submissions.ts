@@ -2,7 +2,9 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { logInfo, logError } from "@/lib/logger";
+import { Logger } from "@/lib/logger";
+
+const log = new Logger("submissions");
 
 export async function submitQuizAttempt(
   quizId: string,
@@ -42,7 +44,7 @@ export async function submitQuizAttempt(
     });
   }
 
-  logInfo("quiz.submit", { userId: user.id, quizId, score, xpEarned: xp });
+  log.info("quiz.submit", { userId: user.id, quizId, score, xpEarned: xp });
   revalidatePath("/student/practice");
   return { score, xpEarned: xp };
 }
@@ -66,7 +68,7 @@ export async function submitAssignment(
     file_urls: fileUrls?.length ? fileUrls : null,
   });
 
-  logInfo("assignment.submit", { userId: user.id, assignmentId, courseId });
+  log.info("assignment.submit", { userId: user.id, assignmentId, courseId });
   revalidatePath("/student/submissions");
   return { success: true };
 }
@@ -90,7 +92,7 @@ export async function submitProject(
     file_urls: fileUrls?.length ? fileUrls : null,
   });
 
-  logInfo("project.submit", { userId: user.id, projectId, courseId });
+  log.info("project.submit", { userId: user.id, projectId, courseId });
   revalidatePath("/student/submissions");
   return { success: true };
 }
@@ -105,6 +107,16 @@ export async function gradeSubmission(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Not authenticated");
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile || (profile.role !== "professor" && profile.role !== "admin")) {
+    throw new Error("Unauthorized: professor or admin role required");
+  }
+
   await supabase
     .from(table)
     .update({
@@ -116,7 +128,7 @@ export async function gradeSubmission(
     })
     .eq("id", submissionId);
 
-  logInfo("submission.grade", { gradedBy: user.id, submissionId, table, grade });
+  log.info("grade", { gradedBy: user.id, submissionId, table, grade });
   revalidatePath("/professor/grading");
   return { success: true };
 }

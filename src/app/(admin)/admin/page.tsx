@@ -1,4 +1,9 @@
+import type { Metadata } from "next";
 import { getSystemStats, getAuditLog } from "@/actions/admin";
+
+export const metadata: Metadata = {
+  title: "Admin Dashboard | IIIT Kalyani LMS",
+};
 import {
   Card,
   CardContent,
@@ -17,9 +22,21 @@ import {
   FileText,
 } from "lucide-react";
 import Link from "next/link";
+import { Logger, safeFetch } from "@/lib/logger";
+
+interface XpTransaction {
+  id: string;
+  xp_amount: number;
+  source: string | null;
+  description: string | null;
+  created_at: string;
+  profiles: { full_name: string; email: string } | null;
+}
+
+const log = new Logger("admin-dashboard");
 
 export default async function AdminDashboard() {
-  let stats = {
+  const defaultStats = {
     totalUsers: 0,
     students: 0,
     professors: 0,
@@ -29,19 +46,8 @@ export default async function AdminDashboard() {
     totalSubmissions: 0,
     totalXpEarned: 0,
   };
-  let auditLog: any[] = [];
-
-  try {
-    stats = await getSystemStats();
-  } catch {
-    // No stats
-  }
-
-  try {
-    auditLog = await getAuditLog();
-  } catch {
-    // No audit log
-  }
+  const stats = await safeFetch(() => getSystemStats(), log) ?? defaultStats;
+  const auditLog = await safeFetch(() => getAuditLog(), log) ?? [];
 
   const recentActivity = auditLog.slice(0, 10);
 
@@ -252,7 +258,7 @@ export default async function AdminDashboard() {
                     </td>
                   </tr>
                 ) : (
-                  recentActivity.map((tx: any, i: number) => (
+                  recentActivity.map((tx: XpTransaction, i: number) => (
                     <tr
                       key={tx.id ?? i}
                       className="border-b last:border-0 hover:bg-muted/50 transition-colors"

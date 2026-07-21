@@ -1,4 +1,9 @@
+import type { Metadata } from "next";
 import { getStudentRoster } from "@/actions/professor";
+
+export const metadata: Metadata = {
+  title: "Students | IIIT Kalyani LMS",
+};
 import {
   Card,
   CardContent,
@@ -10,6 +15,10 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Users, Search } from "lucide-react";
 import Link from "next/link";
 import { StudentSearch } from "@/components/professor/StudentSearch";
+import { Logger, safeFetch } from "@/lib/logger";
+import type { Profile, UserStats } from "@/types/database";
+
+const log = new Logger("professor-students");
 
 export default async function StudentsPage({
   searchParams,
@@ -21,15 +30,9 @@ export default async function StudentsPage({
   const page = parseInt(params.page ?? "0", 10);
   const pageSize = 20;
 
-  let students: any[] = [];
-  let total = 0;
-  try {
-    const result = await getStudentRoster({ search, page, pageSize });
-    students = result.students;
-    total = result.total;
-  } catch {
-    // No data
-  }
+  const result = await safeFetch(() => getStudentRoster({ search, page, pageSize }), log);
+  const students = result?.students ?? [];
+  const total = result?.total ?? 0;
 
   const totalPages = Math.ceil(total / pageSize);
 
@@ -80,8 +83,9 @@ export default async function StudentsPage({
                     </td>
                   </tr>
                 ) : (
-                  students.map((student: any) => {
-                    const stats = student.user_stats?.[0] ?? student.user_stats;
+                  students.map((student: Profile & { user_stats: UserStats[] | UserStats | null }) => {
+                    const rawStats = student.user_stats;
+                    const stats = Array.isArray(rawStats) ? rawStats[0] : rawStats;
                     return (
                       <tr
                         key={student.id}

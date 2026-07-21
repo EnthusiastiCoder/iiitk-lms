@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { getUserEnrollments } from "@/actions/courses";
+import type { Enrollment, Quiz, Course } from "@/types/database";
+import Link from "next/link";
+import { Logger, safeFetch } from "@/lib/logger";
+
+const log = new Logger("student-practice");
 
 export const metadata: Metadata = {
   title: "Practice | IIIT Kalyani LMS",
@@ -23,18 +28,29 @@ function formatTime(seconds: number | null) {
   return `${mins}m`;
 }
 
+interface QuizAttempt {
+  id: string;
+  quiz_id: string;
+  user_id: string;
+  score: number;
+  time_spent_seconds: number | null;
+  completed_at: string;
+}
+
+type CourseInfo = Pick<Course, "id" | "title" | "slug">;
+
 export default async function PracticePage() {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const enrollments = await getUserEnrollments();
-  const enrolledCourseIds = enrollments.map((e: any) => e.course_id);
+  const enrollments = await safeFetch(() => getUserEnrollments(), log) ?? [];
+  const enrolledCourseIds = enrollments.map((e: Pick<Enrollment, "course_id">) => e.course_id);
 
-  let quizzes: any[] = [];
-  let attempts: any[] = [];
-  let courses: any[] = [];
+  let quizzes: Quiz[] = [];
+  let attempts: QuizAttempt[] = [];
+  let courses: CourseInfo[] = [];
 
   if (enrolledCourseIds.length > 0) {
     const [quizResult, attemptResult, courseResult] = await Promise.all([
@@ -59,8 +75,8 @@ export default async function PracticePage() {
     courses = courseResult.data ?? [];
   }
 
-  const courseMap = new Map(courses.map((c: any) => [c.id, c]));
-  const attemptsByQuiz = new Map<string, any[]>();
+  const courseMap = new Map(courses.map((c: CourseInfo) => [c.id, c]));
+  const attemptsByQuiz = new Map<string, QuizAttempt[]>();
   for (const attempt of attempts) {
     const existing = attemptsByQuiz.get(attempt.quiz_id) ?? [];
     existing.push(attempt);
@@ -68,7 +84,7 @@ export default async function PracticePage() {
   }
 
   // Group quizzes by course
-  const groupedByCourse = new Map<string, any[]>();
+  const groupedByCourse = new Map<string, Quiz[]>();
   for (const quiz of quizzes) {
     const courseId = quiz.course_id;
     const existing = groupedByCourse.get(courseId) ?? [];
@@ -77,7 +93,7 @@ export default async function PracticePage() {
   }
 
   const completedCount = quizzes.filter(
-    (q: any) => (attemptsByQuiz.get(q.id)?.length ?? 0) > 0
+    (q: Quiz) => (attemptsByQuiz.get(q.id)?.length ?? 0) > 0
   ).length;
 
   return (
@@ -123,12 +139,12 @@ export default async function PracticePage() {
                     {course?.title ?? "Unknown Course"}
                   </h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {courseQuizzes.map((quiz: any) => {
+                    {courseQuizzes.map((quiz: Quiz) => {
                       const quizAttempts = attemptsByQuiz.get(quiz.id) ?? [];
                       const hasAttempted = quizAttempts.length > 0;
                       const bestScore = hasAttempted
                         ? Math.max(
-                            ...quizAttempts.map((a: any) => a.score ?? 0)
+                            ...quizAttempts.map((a: QuizAttempt) => a.score ?? 0)
                           )
                         : null;
                       const lastAttempt = quizAttempts[0];
@@ -198,6 +214,14 @@ export default async function PracticePage() {
                                 {quizAttempts.length !== 1 ? "s" : ""}
                               </p>
                             )}
+
+                            <Link
+                              href={`/student/courses/${course?.slug ?? courseId}/quiz/${quiz.id}`}
+                              className="inline-flex items-center gap-1.5 mt-3 text-xs font-medium text-brand hover:underline"
+                            >
+                              <PlayCircle className="h-3.5 w-3.5" />
+                              {hasAttempted ? "Retake Quiz" : "Take Quiz"}
+                            </Link>
                           </CardContent>
                         </Card>
                       );

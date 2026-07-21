@@ -42,8 +42,8 @@ export function UserActions({
       try {
         await updateUserRole(userId, newRole);
         router.refresh();
-      } catch (err: any) {
-        alert(err.message ?? "Failed to update role");
+      } catch (err: unknown) {
+        alert(err instanceof Error ? err.message : "Failed to update role");
       }
     });
   };
@@ -54,8 +54,8 @@ export function UserActions({
         await deleteUser(userId);
         setDeleteOpen(false);
         router.refresh();
-      } catch (err: any) {
-        alert(err.message ?? "Failed to delete user");
+      } catch (err: unknown) {
+        alert(err instanceof Error ? err.message : "Failed to delete user");
       }
     });
   };

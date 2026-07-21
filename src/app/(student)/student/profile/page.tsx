@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { getUserEnrollments, getUserCompletions, getCourses } from "@/actions/courses";
+import type { Course, Enrollment, LessonCompletion } from "@/types/database";
+import { Logger, safeFetch } from "@/lib/logger";
+
+const log = new Logger("student-profile");
 
 export const metadata: Metadata = {
   title: "Profile | IIIT Kalyani LMS",
@@ -55,11 +59,14 @@ export default async function ProfilePage() {
     .order("activity_date", { ascending: false })
     .limit(365);
 
-  const [enrollments, completions, courses] = await Promise.all([
-    getUserEnrollments(),
-    getUserCompletions(),
-    getCourses(),
+  const [_enrollments, _completions, _courses] = await Promise.all([
+    safeFetch(() => getUserEnrollments(), log),
+    safeFetch(() => getUserCompletions(), log),
+    safeFetch(() => getCourses(), log),
   ]);
+  const enrollments = _enrollments ?? [];
+  const completions = _completions ?? [];
+  const courses = _courses ?? [];
 
   const tier = tierConfig[stats?.tier ?? "bronze"] ?? tierConfig.bronze;
   const userName = profile?.full_name ?? "Student";
@@ -70,12 +77,12 @@ export default async function ProfilePage() {
   const currentStreak = stats?.current_streak ?? 0;
   const longestStreak = stats?.longest_streak ?? 0;
 
-  const courseMap = new Map(courses.map((c: any) => [c.id, c]));
+  const courseMap = new Map(courses.map((c: Course) => [c.id, c]));
 
-  const enrolledCourses = enrollments.map((e: any) => {
+  const enrolledCourses = enrollments.map((e: Enrollment) => {
     const course = courseMap.get(e.course_id);
     const courseCompletions = completions.filter(
-      (c: any) => c.course_id === e.course_id
+      (c: Pick<LessonCompletion, "course_id">) => c.course_id === e.course_id
     );
     return {
       id: e.course_id,
@@ -222,7 +229,7 @@ export default async function ProfilePage() {
           </CardHeader>
           <CardContent>
             <ActivityHeatmap
-              data={(streakData ?? []).map((d: any) => ({
+              data={(streakData ?? []).map((d: { activity_date: string; xp_earned: number; lessons_completed: number }) => ({
                 date: d.activity_date,
                 xp: d.xp_earned,
                 lessons: d.lessons_completed,
@@ -244,7 +251,7 @@ export default async function ProfilePage() {
           <CardContent>
             {enrolledCourses.length > 0 ? (
               <div className="space-y-4">
-                {enrolledCourses.map((course: any) => (
+                {enrolledCourses.map((course: { id: string; title: string; completedLessons: number }) => (
                   <div key={course.id}>
                     <div className="flex items-center justify-between mb-1.5">
                       <p className="text-sm font-medium truncate pr-4">

@@ -1,5 +1,6 @@
 import { getCourseContentForProfessor } from "@/actions/content";
 import { getClassStats } from "@/actions/professor";
+import type { CourseWithModules, Lesson, Quiz, Assignment, Project } from "@/types/database";
 import {
   Card,
   CardContent,
@@ -40,6 +41,9 @@ import { EditQuizDialog } from "@/components/professor/EditQuizDialog";
 import { EditAssignmentDialog } from "@/components/professor/EditAssignmentDialog";
 import { EditProjectDialog } from "@/components/professor/EditProjectDialog";
 import { DeleteConfirmDialog } from "@/components/professor/DeleteConfirmDialog";
+import { Logger, safeFetch } from "@/lib/logger";
+
+const log = new Logger("professor-course-detail");
 
 import {
   deleteModule,
@@ -49,6 +53,19 @@ import {
   deleteProject,
 } from "@/actions/content";
 
+interface ClassStat {
+  courseId: string;
+  courseTitle: string;
+  courseSlug: string;
+  accentColor: string;
+  enrolled: number;
+  avgProgress: number;
+  totalLessons: number;
+}
+
+type ModuleWithContent = CourseWithModules["modules"][number];
+type CourseContent = CourseWithModules | null;
+
 export default async function CourseDetailPage({
   params,
 }: {
@@ -56,20 +73,10 @@ export default async function CourseDetailPage({
 }) {
   const { courseSlug } = await params;
 
-  let course: any = null;
-  try {
-    course = await getCourseContentForProfessor(courseSlug);
-  } catch {
-    // Error
-  }
+  const course = await safeFetch(() => getCourseContentForProfessor(courseSlug), log) as CourseContent;
 
-  let stats: any = null;
-  try {
-    const allStats = await getClassStats();
-    stats = allStats.find((s: any) => s.courseSlug === courseSlug) ?? null;
-  } catch {
-    // No stats
-  }
+  const allStats = await safeFetch(() => getClassStats(), log);
+  const stats: ClassStat | null = allStats?.find((s: ClassStat) => s.courseSlug === courseSlug) ?? null;
 
   if (!course) {
     return (
@@ -89,21 +96,21 @@ export default async function CourseDetailPage({
     );
   }
 
-  const modules = course.modules ?? [];
+  const modules: ModuleWithContent[] = course.modules ?? [];
   const totalLessons = modules.reduce(
-    (sum: number, m: any) => sum + (m.lessons?.length ?? 0),
+    (sum: number, m: ModuleWithContent) => sum + (m.lessons?.length ?? 0),
     0
   );
   const totalQuizzes = modules.reduce(
-    (sum: number, m: any) => sum + (m.quizzes?.length ?? 0),
+    (sum: number, m: ModuleWithContent) => sum + (m.quizzes?.length ?? 0),
     0
   );
   const totalAssignments = modules.reduce(
-    (sum: number, m: any) => sum + (m.assignments?.length ?? 0),
+    (sum: number, m: ModuleWithContent) => sum + (m.assignments?.length ?? 0),
     0
   );
   const totalProjects = modules.reduce(
-    (sum: number, m: any) => sum + (m.projects?.length ?? 0),
+    (sum: number, m: ModuleWithContent) => sum + (m.projects?.length ?? 0),
     0
   );
 
@@ -201,7 +208,7 @@ export default async function CourseDetailPage({
       {modules.length === 0 ? (
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
-            No modules have been added to this course yet. Click "Add Module"
+            No modules have been added to this course yet. Click &ldquo;Add Module&rdquo;
             above to get started.
           </CardContent>
         </Card>
@@ -209,7 +216,7 @@ export default async function CourseDetailPage({
         <Card>
           <CardContent className="pt-2">
             <Accordion>
-              {modules.map((mod: any) => {
+              {modules.map((mod: ModuleWithContent) => {
                 const lessonCount = mod.lessons?.length ?? 0;
                 const quizCount = mod.quizzes?.length ?? 0;
                 const assignmentCount = mod.assignments?.length ?? 0;
@@ -320,7 +327,7 @@ export default async function CourseDetailPage({
                               </p>
                             ) : (
                               <div className="space-y-2 py-1">
-                                {(mod.lessons ?? []).map((lesson: any) => (
+                                {(mod.lessons ?? []).map((lesson: Lesson) => (
                                   <div
                                     key={lesson.id}
                                     className="flex items-center gap-3 rounded-lg border px-3 py-2.5"
@@ -367,7 +374,7 @@ export default async function CourseDetailPage({
                                         currentType={lesson.type ?? "reading"}
                                         currentEstimatedMinutes={lesson.estimated_minutes ?? 15}
                                         currentXpReward={lesson.xp_reward ?? 50}
-                                        currentContent={lesson.content ?? null}
+                                        currentContent={lesson.content as { sections?: { type: "text" | "code"; content: string }[] } ?? null}
                                       />
                                       <DeleteConfirmDialog
                                         title="Delete Lesson"
@@ -392,7 +399,7 @@ export default async function CourseDetailPage({
                               </p>
                             ) : (
                               <div className="space-y-2 py-1">
-                                {(mod.quizzes ?? []).map((quiz: any) => (
+                                {(mod.quizzes ?? []).map((quiz: Quiz) => (
                                   <div
                                     key={quiz.id}
                                     className="flex items-center gap-3 rounded-lg border px-3 py-2.5"
@@ -461,7 +468,7 @@ export default async function CourseDetailPage({
                             ) : (
                               <div className="space-y-2 py-1">
                                 {(mod.assignments ?? []).map(
-                                  (assignment: any) => (
+                                  (assignment: Assignment) => (
                                     <div
                                       key={assignment.id}
                                       className="flex items-center gap-3 rounded-lg border px-3 py-2.5"
@@ -538,7 +545,7 @@ export default async function CourseDetailPage({
                               </p>
                             ) : (
                               <div className="space-y-2 py-1">
-                                {(mod.projects ?? []).map((project: any) => (
+                                {(mod.projects ?? []).map((project: Project) => (
                                   <div
                                     key={project.id}
                                     className="flex items-center gap-3 rounded-lg border px-3 py-2.5"

@@ -57,8 +57,8 @@ export function CreateAchievementDialog() {
         setRarity("common");
         setXpReward("50");
         router.refresh();
-      } catch (err: any) {
-        alert(err.message ?? "Failed to create achievement");
+      } catch (err: unknown) {
+        alert(err instanceof Error ? err.message : "Failed to create achievement");
       }
     });
   };

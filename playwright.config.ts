@@ -19,6 +19,7 @@ export default defineConfig({
     { name: 'professor-flows', testMatch: 'professor/*.spec.ts', dependencies: ['setup'] },
     { name: 'admin-flows', testMatch: 'admin/*.spec.ts', dependencies: ['setup'] },
     { name: 'journey-flows', testMatch: 'flows/*.spec.ts', dependencies: ['setup'] },
+    { name: 'interactive-flows', testMatch: 'flows/*-flow.spec.ts', dependencies: ['setup'] },
   ],
   webServer: {
     command: 'npm run dev',

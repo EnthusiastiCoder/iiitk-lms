@@ -10,19 +10,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft,
-  CheckCircle2,
   Clock,
   Code2,
-  Download,
-  FileUp,
   Loader2,
-  Paperclip,
   Send,
-  Trash2,
   Zap,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { CodeEditor } from "@/components/editor/CodeEditor";
+import { FileUploader, MAX_FILE_SIZE_MB } from "./FileUploader";
+import { SubmissionStatus } from "./SubmissionStatus";
+import type { ExistingSubmission } from "./SubmissionStatus";
 
 interface CodeSubmissionProps {
   itemId: string;
@@ -37,19 +34,8 @@ interface CodeSubmissionProps {
   requirements: string[] | null;
   dueDate: string | null;
   type: "assignment" | "project";
-  existingSubmission?: {
-    id: string;
-    code: string;
-    status: string;
-    grade: number | null;
-    feedback: string | null;
-    submitted_at: string;
-    file_urls: string[] | null;
-  } | null;
+  existingSubmission?: ExistingSubmission | null;
 }
-
-const ACCEPTED_FILE_TYPES = ".pdf,.png,.jpg,.jpeg,.gif,.zip";
-const MAX_FILE_SIZE_MB = 10;
 
 export function CodeSubmission({
   itemId,
@@ -170,8 +156,6 @@ export function CodeSubmission({
   };
 
   const isAlreadySubmitted = !!existingSubmission;
-  const isGraded = existingSubmission?.status === "graded";
-  const isPendingReview = existingSubmission?.status === "pending";
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -236,65 +220,13 @@ export function CodeSubmission({
         </Card>
       )}
 
-      {/* Existing Submission Status */}
-      {isPendingReview && !submitted && (
-        <Card className="border-amber-500/30 bg-amber-500/5">
-          <CardContent className="py-4">
-            <div className="flex items-center gap-3">
-              <Clock className="h-5 w-5 text-amber-500" />
-              <div>
-                <p className="font-medium text-amber-600 dark:text-amber-400">
-                  Submission pending review
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Submitted on{" "}
-                  {new Date(existingSubmission!.submitted_at).toLocaleString()}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {isGraded && !submitted && (
-        <Card className="border-brand/30 bg-brand/5">
-          <CardContent className="py-4 space-y-2">
-            <div className="flex items-center gap-3">
-              <CheckCircle2 className="h-5 w-5 text-brand" />
-              <div>
-                <p className="font-medium text-brand">Graded</p>
-                <p className="text-sm text-muted-foreground">
-                  Score: {existingSubmission!.grade}/100
-                </p>
-              </div>
-            </div>
-            {existingSubmission!.feedback && (
-              <p className="text-sm text-muted-foreground pl-8">
-                Feedback: {existingSubmission!.feedback}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Success message */}
-      {submitted && (
-        <Card className="border-brand/30 bg-brand/5">
-          <CardContent className="py-6 text-center space-y-2">
-            <CheckCircle2 className="h-10 w-10 text-brand mx-auto" />
-            <p className="font-semibold text-lg">Submitted successfully!</p>
-            <p className="text-sm text-muted-foreground">
-              Your {type} has been submitted for review.
-            </p>
-            <Link href={`/student/courses/${courseSlug}`}>
-              <Button variant="outline" className="mt-3">
-                <ArrowLeft className="h-4 w-4" />
-                Back to Course
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      )}
+      {/* Submission Status */}
+      <SubmissionStatus
+        existingSubmission={existingSubmission}
+        submitted={submitted}
+        type={type}
+        courseSlug={courseSlug}
+      />
 
       {/* Code Editor */}
       {!submitted && (
@@ -312,79 +244,15 @@ export function CodeSubmission({
           </div>
 
           {/* File Upload */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Paperclip className="h-4 w-4" />
-                Supporting Files
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center gap-3">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept={ACCEPTED_FILE_TYPES}
-                  onChange={handleFileUpload}
-                  className="hidden"
-                  id="file-upload"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isUploading}
-                >
-                  {isUploading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Uploading...
-                    </>
-                  ) : (
-                    <>
-                      <FileUp className="h-4 w-4" />
-                      Upload File
-                    </>
-                  )}
-                </Button>
-                <span className="text-xs text-muted-foreground">
-                  PDF, images, or ZIP. Max {MAX_FILE_SIZE_MB}MB.
-                </span>
-              </div>
-
-              {uploadedFiles.length > 0 && (
-                <ul className="space-y-2">
-                  {uploadedFiles.map((filePath) => (
-                    <li
-                      key={filePath}
-                      className="flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm"
-                    >
-                      <span className="truncate flex-1 min-w-0">
-                        {getFileName(filePath)}
-                      </span>
-                      <div className="flex items-center gap-1 shrink-0">
-                        <a
-                          href={getDownloadUrl(filePath)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-muted-foreground hover:text-foreground transition-colors p-1"
-                        >
-                          <Download className="h-4 w-4" />
-                        </a>
-                        <button
-                          onClick={() => handleRemoveFile(filePath)}
-                          className="text-muted-foreground hover:text-destructive transition-colors p-1"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </CardContent>
-          </Card>
+          <FileUploader
+            uploadedFiles={uploadedFiles}
+            isUploading={isUploading}
+            onFileUpload={handleFileUpload}
+            onRemoveFile={handleRemoveFile}
+            getFileName={getFileName}
+            getDownloadUrl={getDownloadUrl}
+            fileInputRef={fileInputRef}
+          />
 
           <div className="flex items-center justify-between">
             <Link href={`/student/courses/${courseSlug}`}>

@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { getUserCompletions } from "@/actions/courses";
+import { Logger, safeFetch } from "@/lib/logger";
+
+const log = new Logger("student-skill-tree");
 
 export const metadata: Metadata = {
   title: "Skill Tree | IIIT Kalyani LMS",
@@ -25,7 +28,7 @@ export default async function SkillTreePage({ searchParams }: Props) {
     .limit(100);
 
   const uniqueCourseIds = [
-    ...new Set((treeCourseIds ?? []).map((r: any) => r.course_id)),
+    ...new Set((treeCourseIds ?? []).map((r: { course_id: string }) => r.course_id)),
   ];
 
   if (uniqueCourseIds.length === 0) {
@@ -55,7 +58,7 @@ export default async function SkillTreePage({ searchParams }: Props) {
 
   const courseList = courses ?? [];
   const activeCourseId = selectedCourseId ?? courseList[0]?.id;
-  const activeCourse = courseList.find((c: any) => c.id === activeCourseId);
+  const activeCourse = courseList.find((c: { id: string; title: string; accent_color: string }) => c.id === activeCourseId);
   const courseColor = activeCourse?.accent_color ?? "#58CC02";
 
   // Fetch nodes and edges for the active course
@@ -73,9 +76,9 @@ export default async function SkillTreePage({ searchParams }: Props) {
   ]);
 
   // Fetch user lesson completions to determine node status
-  const completions = await getUserCompletions(activeCourseId);
+  const completions = await safeFetch(() => getUserCompletions(activeCourseId), log) ?? [];
   const completedLessonIds = new Set(
-    completions.map((c: any) => c.lesson_id)
+    completions.map((c: { lesson_id: string }) => c.lesson_id)
   );
 
   return (
@@ -99,7 +102,7 @@ export default async function SkillTreePage({ searchParams }: Props) {
       {/* Course selector tabs */}
       <FadeIn delay={0.1}>
         <div className="flex gap-2 mb-6 flex-wrap">
-          {courseList.map((course: any) => (
+          {courseList.map((course: { id: string; title: string; accent_color: string }) => (
             <a
               key={course.id}
               href={`/student/skill-tree?course=${course.id}`}

@@ -1,5 +1,10 @@
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { getClassStats } from "@/actions/professor";
+
+export const metadata: Metadata = {
+  title: "Professor Profile | IIIT Kalyani LMS",
+};
 import {
   Card,
   CardContent,
@@ -19,6 +24,9 @@ import {
   BarChart3,
   GraduationCap,
 } from "lucide-react";
+import { Logger, safeFetch } from "@/lib/logger";
+
+const log = new Logger("professor-profile");
 
 export default async function ProfessorProfilePage() {
   const supabase = await createClient();
@@ -32,12 +40,7 @@ export default async function ProfessorProfilePage() {
     .eq("id", user!.id)
     .single();
 
-  let courseStats: any[] = [];
-  try {
-    courseStats = await getClassStats();
-  } catch {
-    // No stats
-  }
+  const courseStats = await safeFetch(() => getClassStats(), log) ?? [];
 
   const totalStudents = courseStats.reduce((sum, c) => sum + c.enrolled, 0);
   const totalLessons = courseStats.reduce((sum, c) => sum + c.totalLessons, 0);

@@ -2,6 +2,9 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { Logger } from "@/lib/logger";
+
+const log = new Logger("upload");
 
 export async function addFileToSubmission(
   submissionId: string,
@@ -25,6 +28,8 @@ export async function addFileToSubmission(
 
   const currentUrls: string[] = submission.file_urls ?? [];
   const updatedUrls = [...currentUrls, fileUrl];
+
+  log.info("file_url.persist", { submissionId, table, userId: user.id, fileCount: updatedUrls.length });
 
   await supabase
     .from(table)

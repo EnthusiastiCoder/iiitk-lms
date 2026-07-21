@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { getLeaderboard } from "@/actions/gamification";
+import { Logger, safeFetch } from "@/lib/logger";
+
+const log = new Logger("student-leaderboard");
 
 export const metadata: Metadata = {
   title: "Leaderboard | IIIT Kalyani LMS",
@@ -10,13 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { FadeIn } from "@/components/motion/fade-in";
-
-const tierConfig: Record<string, { color: string; label: string }> = {
-  bronze: { color: "var(--color-tier-bronze)", label: "Bronze" },
-  silver: { color: "var(--color-tier-silver)", label: "Silver" },
-  gold: { color: "var(--color-tier-gold)", label: "Gold" },
-  diamond: { color: "var(--color-tier-diamond)", label: "Diamond" },
-};
+import { tierConfig } from "@/lib/tiers";
 
 const podiumColors = ["#E8A800", "#8E8E93", "#B87333"] as const;
 const podiumLabels = ["1st", "2nd", "3rd"] as const;
@@ -27,7 +24,7 @@ export default async function LeaderboardPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const leaderboard = await getLeaderboard();
+  const leaderboard = await safeFetch(() => getLeaderboard(), log) ?? [];
 
   const top3 = leaderboard.slice(0, 3);
   const rest = leaderboard.slice(3);

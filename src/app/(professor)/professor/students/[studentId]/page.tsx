@@ -1,5 +1,6 @@
 import { getStudentDetail } from "@/actions/professor";
 import { getCourses } from "@/actions/courses";
+import type { Course } from "@/types/database";
 import {
   Card,
   CardContent,
@@ -18,6 +19,9 @@ import {
   GraduationCap,
 } from "lucide-react";
 import Link from "next/link";
+import { Logger, safeFetch } from "@/lib/logger";
+
+const log = new Logger("professor-student-detail");
 
 export default async function StudentDetailPage({
   params,
@@ -26,19 +30,8 @@ export default async function StudentDetailPage({
 }) {
   const { studentId } = await params;
 
-  let detail: any = null;
-  try {
-    detail = await getStudentDetail(studentId);
-  } catch {
-    // Error fetching
-  }
-
-  let allCourses: any[] = [];
-  try {
-    allCourses = await getCourses();
-  } catch {
-    // No courses
-  }
+  const detail = await safeFetch(() => getStudentDetail(studentId), log);
+  const allCourses = await safeFetch(() => getCourses(), log) ?? [];
 
   if (!detail?.profile) {
     return (
@@ -59,7 +52,7 @@ export default async function StudentDetailPage({
   }
 
   const { profile, stats, enrolledCourseIds, completions, quizAttempts } = detail;
-  const enrolledCourses = allCourses.filter((c: any) =>
+  const enrolledCourses = allCourses.filter((c: Course) =>
     enrolledCourseIds.includes(c.id)
   );
 
@@ -130,9 +123,9 @@ export default async function StudentDetailPage({
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          {enrolledCourses.map((course: any) => {
+          {enrolledCourses.map((course: Course) => {
             const courseCompletions = completions.filter(
-              (c: any) => c.course_id === course.id
+              (c: { course_id: string }) => c.course_id === course.id
             );
             const progress =
               course.total_lessons > 0
@@ -186,7 +179,7 @@ export default async function StudentDetailPage({
                     </td>
                   </tr>
                 ) : (
-                  quizAttempts.slice(0, 10).map((attempt: any, i: number) => (
+                  quizAttempts.slice(0, 10).map((attempt: { quiz_id: string; score: number; completed_at: string }, i: number) => (
                     <tr
                       key={`${attempt.quiz_id}-${i}`}
                       className="border-b last:border-0"

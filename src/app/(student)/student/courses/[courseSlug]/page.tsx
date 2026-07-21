@@ -2,10 +2,15 @@ import type { Metadata } from "next";
 import { getCourseWithModules, getUserCompletions, getUserEnrollments } from "@/actions/courses";
 import { getCourseBySlug } from "@/actions/courses";
 import { notFound } from "next/navigation";
+import type { Enrollment, LessonCompletion } from "@/types/database";
+import type { CourseWithModules } from "@/types/database";
 import { BookOpen, Clock, Zap, BarChart3 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CourseModules } from "@/components/courses/CourseModules";
 import { EnrollButton } from "@/components/courses/EnrollButton";
+import { Logger, safeFetch } from "@/lib/logger";
+
+const log = new Logger("student-course-detail");
 
 export async function generateMetadata({
   params,
@@ -30,16 +35,18 @@ export default async function CourseDetailPage({
   const course = await getCourseWithModules(courseSlug);
   if (!course) notFound();
 
-  const [completions, enrollments] = await Promise.all([
-    getUserCompletions(course.id),
-    getUserEnrollments(),
+  const [_completions, _enrollments] = await Promise.all([
+    safeFetch(() => getUserCompletions(course.id), log),
+    safeFetch(() => getUserEnrollments(), log),
   ]);
-  const isEnrolled = enrollments.some((e: any) => e.course_id === course.id);
-  const completedIds = new Set(completions.map((c: any) => c.lesson_id));
+  const completions = _completions ?? [];
+  const enrollments = _enrollments ?? [];
+  const isEnrolled = enrollments.some((e: Enrollment) => e.course_id === course.id);
+  const completedIds = new Set(completions.map((c: Pick<LessonCompletion, "lesson_id">) => c.lesson_id));
   const totalLessons =
     course.total_lessons ??
     course.modules.reduce(
-      (sum: number, m: any) => sum + m.lessons.length,
+      (sum: number, m: CourseWithModules["modules"][number]) => sum + m.lessons.length,
       0
     );
   const completedCount = completedIds.size;
