@@ -100,6 +100,7 @@ export function ProfessorSidebar({ profile }: ProfessorSidebarProps) {
             </motion.span>
             <button
               onClick={toggleCollapsed}
+              aria-label="Collapse sidebar"
               className="ml-auto p-1.5 rounded-lg hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
             >
               <PanelLeftClose className="h-4 w-4" />
@@ -184,6 +185,7 @@ export function ProfessorSidebar({ profile }: ProfessorSidebarProps) {
             </div>
             <button
               onClick={toggleTheme}
+              aria-label="Toggle theme"
               className="p-1 rounded-lg hover:bg-accent transition-colors"
             >
               {theme === "dark" ? (
@@ -201,6 +203,7 @@ export function ProfessorSidebar({ profile }: ProfessorSidebarProps) {
         <div className="px-2 py-2 flex flex-col gap-1">
           <button
             onClick={toggleTheme}
+            aria-label="Toggle theme"
             className="flex items-center justify-center p-2 rounded-lg transition-colors text-muted-foreground hover:text-foreground hover:bg-accent"
           >
             {theme === "dark" ? (
@@ -211,6 +214,7 @@ export function ProfessorSidebar({ profile }: ProfessorSidebarProps) {
           </button>
           <button
             onClick={toggleCollapsed}
+            aria-label="Expand sidebar"
             className="flex items-center justify-center p-2 rounded-lg transition-colors text-muted-foreground/40 hover:text-foreground hover:bg-accent"
           >
             <PanelLeftOpen className="h-5 w-5 shrink-0" />
