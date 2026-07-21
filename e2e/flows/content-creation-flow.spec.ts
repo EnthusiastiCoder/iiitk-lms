@@ -43,17 +43,17 @@ test.describe('Professor Content Creation', () => {
 
     // Verify "Back to Courses" link
     await expect(
-      page.locator('main').getByText('Back to Courses')
+      page.locator('main').getByText('Back to Courses').first()
     ).toBeVisible();
 
     // Verify "Modules & Content" section heading
     await expect(
-      page.locator('main').getByText('Modules & Content')
+      page.locator('main').getByText('Modules & Content').first()
     ).toBeVisible();
 
     // Verify course content stats are displayed
     await expect(
-      page.locator('main').getByText(/\d+ lessons/)
+      page.locator('main').getByText(/\d+ lessons/).first()
     ).toBeVisible();
   });
 
@@ -91,8 +91,10 @@ test.describe('Professor Content Creation', () => {
 
     await addModuleBtn.click();
 
-    // Verify dialog opened
-    const dialog = page.locator('[role="dialog"]');
+    // Verify dialog opened (base-ui uses data-slot, role may vary)
+    const dialog = page.locator(
+      '[data-slot="dialog-content"], [role="dialog"]'
+    ).first();
     await expect(dialog).toBeVisible({ timeout: 5000 });
 
     // Verify dialog title
@@ -309,19 +311,19 @@ test.describe('Professor Content Creation', () => {
 
     // Verify the course header card shows content counts
     await expect(
-      page.locator('main').getByText(/\d+ lessons/)
+      page.locator('main').getByText(/\d+ lessons/).first()
     ).toBeVisible();
     await expect(
-      page.locator('main').getByText(/\d+ modules/)
+      page.locator('main').getByText(/\d+ modules/).first()
     ).toBeVisible();
     await expect(
-      page.locator('main').getByText(/\d+ quizzes/)
+      page.locator('main').getByText(/\d+ quizzes/).first()
     ).toBeVisible();
     await expect(
-      page.locator('main').getByText(/\d+ assignments/)
+      page.locator('main').getByText(/\d+ assignments/).first()
     ).toBeVisible();
     await expect(
-      page.locator('main').getByText(/\d+ projects/)
+      page.locator('main').getByText(/\d+ projects/).first()
     ).toBeVisible();
   });
 });
