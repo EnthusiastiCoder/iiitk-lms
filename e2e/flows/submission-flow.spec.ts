@@ -33,7 +33,7 @@ test.describe('Assignment Submission Flow', () => {
       // Verify the CodeSubmission page loaded
       // Header shows title in h1 and type/difficulty/language badges
       await expect(
-        page.locator('main').getByRole('heading', { level: 1 })
+        page.locator('main').getByRole('heading', { level: 1 }).first()
       ).toBeVisible();
 
       // Verify "assignment" badge is present
@@ -43,12 +43,12 @@ test.describe('Assignment Submission Flow', () => {
 
       // Verify "Back to course" link exists
       await expect(
-        page.locator('main').getByText('Back to course')
+        page.locator('main').getByText('Back to course').first()
       ).toBeVisible();
 
       // Verify XP reward is displayed
       await expect(
-        page.locator('main').getByText(/\d+ XP/)
+        page.locator('main').getByText(/\d+ XP/).first()
       ).toBeVisible();
     }
   });
@@ -179,7 +179,7 @@ test.describe('Project Submission Flow', () => {
 
       // Verify the CodeSubmission page loaded with project type
       await expect(
-        page.locator('main').getByRole('heading', { level: 1 })
+        page.locator('main').getByRole('heading', { level: 1 }).first()
       ).toBeVisible();
 
       // Verify "project" badge is present

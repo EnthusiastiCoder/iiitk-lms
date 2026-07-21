@@ -212,17 +212,18 @@ test.describe('Professor Course Management', () => {
       page
         .locator('main')
         .getByText('Manage your courses and track student progress')
+        .first()
     ).toBeVisible();
 
     // Verify summary stats
     await expect(
-      page.locator('main').getByText('Total Courses')
+      page.locator('main').getByText('Total Courses').first()
     ).toBeVisible();
     await expect(
-      page.locator('main').getByText('Total Enrollments')
+      page.locator('main').getByText('Total Enrollments').first()
     ).toBeVisible();
     await expect(
-      page.locator('main').getByText('Total Lessons')
+      page.locator('main').getByText('Total Lessons').first()
     ).toBeVisible();
 
     // Check for course cards or empty state
@@ -260,7 +261,7 @@ test.describe('Professor Course Management', () => {
 
         // Verify "Back to Courses" link
         await expect(
-          page.locator('main').getByText('Back to Courses')
+          page.locator('main').getByText('Back to Courses').first()
         ).toBeVisible();
 
         // Verify course title in a heading
