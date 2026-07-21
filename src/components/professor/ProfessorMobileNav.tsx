@@ -169,6 +169,7 @@ export function ProfessorMobileNav({ profile }: ProfessorMobileNavProps) {
         <GraduationCap className="h-4 w-4" style={{ color: ACCENT }} />
         <button
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          aria-label="Toggle theme"
           className="p-1.5 rounded-lg hover:bg-accent transition-colors"
         >
           {theme === "dark" ? (
