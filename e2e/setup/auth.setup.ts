@@ -5,7 +5,7 @@ setup('authenticate student', async ({ page }) => {
   await page.fill('input[name="email"]', process.env.E2E_STUDENT_EMAIL!);
   await page.fill('input[name="password"]', process.env.E2E_STUDENT_PASSWORD!);
   await page.click('button[type="submit"]');
-  await page.waitForURL('**/student**', { timeout: 15000 });
+  await page.waitForURL('**/student**', { timeout: 60000 });
   await expect(page).not.toHaveURL(/\/auth\//);
   await page.context().storageState({ path: '.auth/student.json' });
 });

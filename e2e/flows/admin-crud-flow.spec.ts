@@ -22,8 +22,10 @@ test.describe('Admin CRUD Operations', () => {
 
     await createBtn.click();
 
-    // Verify dialog opened
-    const dialog = page.locator('[role="dialog"]');
+    // Verify dialog opened (base-ui uses data-slot, role may vary)
+    const dialog = page.locator(
+      '[data-slot="dialog-content"], [role="dialog"]'
+    ).first();
     await expect(dialog).toBeVisible({ timeout: 5000 });
 
     // Verify dialog title
@@ -96,8 +98,10 @@ test.describe('Admin CRUD Operations', () => {
 
     await createBtn.click();
 
-    // Verify dialog opened
-    const dialog = page.locator('[role="dialog"]');
+    // Verify dialog opened (base-ui uses data-slot, role may vary)
+    const dialog = page.locator(
+      '[data-slot="dialog-content"], [role="dialog"]'
+    ).first();
     await expect(dialog).toBeVisible({ timeout: 5000 });
 
     // Verify dialog title
@@ -205,7 +209,7 @@ test.describe('Admin CRUD Operations', () => {
     const headers = ['User', 'Role', 'Level', 'XP', 'Joined', 'Actions'];
     for (const header of headers) {
       await expect(
-        page.locator('main th').getByText(header)
+        page.locator('main').locator('th', { hasText: header }).first()
       ).toBeVisible();
     }
   });
