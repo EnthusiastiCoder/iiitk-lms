@@ -18,7 +18,7 @@ export default defineConfig({
     { name: 'student-flows', testMatch: 'student/*.spec.ts', dependencies: ['setup'] },
     { name: 'professor-flows', testMatch: 'professor/*.spec.ts', dependencies: ['setup'] },
     { name: 'admin-flows', testMatch: 'admin/*.spec.ts', dependencies: ['setup'] },
-    { name: 'journey-flows', testMatch: 'flows/*.spec.ts', dependencies: ['setup'] },
+    { name: 'journey-flows', testMatch: ['flows/student-journey.spec.ts', 'flows/professor-management.spec.ts', 'flows/admin-operations.spec.ts', 'flows/cross-role.spec.ts'], dependencies: ['setup'] },
     { name: 'interactive-flows', testMatch: 'flows/*-flow.spec.ts', dependencies: ['setup'] },
   ],
   webServer: {
