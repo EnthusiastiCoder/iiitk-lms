@@ -200,6 +200,7 @@ export function MobileNav({ profile, stats }: MobileNavProps) {
         </div>
         <button
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          aria-label="Toggle theme"
           className="p-1.5 rounded-lg hover:bg-accent transition-colors"
         >
           {theme === "dark" ? (
