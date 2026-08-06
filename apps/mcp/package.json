@@ -1,0 +1,14 @@
+{
+  "name": "@lms/mcp",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "bin": { "lms-bugs-mcp": "./src/index.ts" },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5"
+  }
+}
