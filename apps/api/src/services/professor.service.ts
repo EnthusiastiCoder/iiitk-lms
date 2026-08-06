@@ -119,7 +119,13 @@ export async function getStudentRoster(
  * @returns Student profile, stats, enrollments, completions, and quiz attempts
  * @throws {NotFoundError} If the student is not found
  */
-export async function getStudentDetail(studentId: string) {
+export async function getStudentDetail(studentId: string): Promise<{
+  profile: Record<string, unknown>;
+  stats: Record<string, unknown> | null;
+  enrollments: Record<string, unknown>[];
+  lessonCompletions: Record<string, unknown>[];
+  quizAttempts: Record<string, unknown>[];
+}> {
   const [profileRes, statsRes, enrollRes, completionRes, quizRes] =
     await Promise.all([
       supabase.from("profiles").select("*").eq("id", studentId).single(),
@@ -167,7 +173,10 @@ export async function getStudentDetail(studentId: string) {
  * @returns Object with pending assignment and project submissions
  * @throws Error if database query fails
  */
-export async function getPendingSubmissions(userId: string) {
+export async function getPendingSubmissions(userId: string): Promise<{
+  assignmentSubmissions: Record<string, unknown>[];
+  projectSubmissions: Record<string, unknown>[];
+}> {
   const { data: courses } = await supabase
     .from("courses")
     .select("id")
@@ -212,7 +221,10 @@ export async function getPendingSubmissions(userId: string) {
  * @returns Object with recently graded assignment and project submissions
  * @throws Error if database query fails
  */
-export async function getRecentGraded(userId: string) {
+export async function getRecentGraded(userId: string): Promise<{
+  assignmentSubmissions: Record<string, unknown>[];
+  projectSubmissions: Record<string, unknown>[];
+}> {
   const { data: courses } = await supabase
     .from("courses")
     .select("id")

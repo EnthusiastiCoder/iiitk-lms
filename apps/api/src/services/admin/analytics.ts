@@ -59,7 +59,7 @@ export async function getSystemStats(): Promise<SystemStats> {
  * @returns Array of recent XP transactions with user info
  * @throws Error if database query fails
  */
-export async function getAuditLog() {
+export async function getAuditLog(): Promise<Record<string, unknown>[]> {
   const { data, error } = await supabase
     .from("xp_transactions")
     .select("*, profiles!user_id(full_name, email)")
@@ -80,7 +80,11 @@ export async function getAuditLog() {
  * @returns Analytics data object
  * @throws Error if database query fails
  */
-export async function getAnalyticsData() {
+export async function getAnalyticsData(): Promise<{
+  userGrowth: { month: string; count: number }[];
+  enrollmentDistribution: { courseId: string; title: string; count: number }[];
+  topStudents: Record<string, unknown>[];
+}> {
   const [profilesRes, enrollmentsRes, statsRes] = await Promise.all([
     supabase
       .from("profiles")

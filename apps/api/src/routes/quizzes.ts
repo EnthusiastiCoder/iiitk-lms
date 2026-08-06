@@ -73,13 +73,13 @@ quizRouter.post("/:id/attempt", async (req, res, next) => {
       throw new BadRequestError(parsed.error.issues[0].message);
     }
 
-    const result = await quizService.submitQuizAttempt(
-      req.user!.userId,
-      req.params.id,
-      parsed.data.answers,
-      parsed.data.score,
-      parsed.data.timeSpent
-    );
+    const result = await quizService.submitQuizAttempt({
+      userId: req.user!.userId,
+      quizId: req.params.id,
+      answers: parsed.data.answers,
+      score: parsed.data.score,
+      timeSpent: parsed.data.timeSpent,
+    });
 
     res.json({ data: result });
   } catch (err) {

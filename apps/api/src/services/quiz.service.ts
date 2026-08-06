@@ -67,13 +67,9 @@ function calculateXpEarned(score: number, maxXp: number): number {
  * @param timeSpent - Time spent in seconds.
  */
 async function insertQuizAttempt(
-  userId: string,
-  quizId: string,
-  answers: Record<string, string>,
-  score: number,
-  xpEarned: number,
-  timeSpent: number
+  options: InsertQuizAttemptOptions
 ): Promise<void> {
+  const { userId, quizId, answers, score, xpEarned, timeSpent } = options;
   const { error } = await supabase.from("quiz_attempts").insert({
     user_id: userId,
     quiz_id: quizId,
@@ -135,6 +131,25 @@ async function updateUserStats(
   }
 }
 
+/** Options for inserting a quiz attempt record. */
+interface InsertQuizAttemptOptions {
+  userId: string;
+  quizId: string;
+  answers: Record<string, string>;
+  score: number;
+  xpEarned: number;
+  timeSpent: number;
+}
+
+/** Options for submitting a quiz attempt. */
+interface SubmitQuizAttemptOptions {
+  userId: string;
+  quizId: string;
+  answers: Record<string, string>;
+  score: number;
+  timeSpent: number;
+}
+
 /** Result shape returned by {@link submitQuizAttempt}. */
 interface QuizAttemptResult {
   score: number;
@@ -156,12 +171,9 @@ interface QuizAttemptResult {
  * @throws {NotFoundError} When the quiz does not exist.
  */
 export async function submitQuizAttempt(
-  userId: string,
-  quizId: string,
-  answers: Record<string, string>,
-  score: number,
-  timeSpent: number
+  options: SubmitQuizAttemptOptions
 ): Promise<QuizAttemptResult> {
+  const { userId, quizId, answers, score, timeSpent } = options;
   const { data: quiz, error } = await supabase
     .from("quizzes")
     .select("xp_reward")
@@ -178,7 +190,7 @@ export async function submitQuizAttempt(
     (quiz as { xp_reward: number }).xp_reward
   );
 
-  await insertQuizAttempt(userId, quizId, answers, score, xpEarned, timeSpent);
+  await insertQuizAttempt({ userId, quizId, answers, score, xpEarned, timeSpent });
   await insertXpTransaction(userId, quizId, xpEarned);
   await updateUserStats(userId, xpEarned);
 

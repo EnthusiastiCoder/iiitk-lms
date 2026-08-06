@@ -75,13 +75,13 @@ projectRouter.post("/:id/submit", async (req, res, next) => {
       throw new BadRequestError(parsed.error.issues[0].message);
     }
 
-    const submission = await submissionService.submitProject(
-      req.user!.userId,
-      req.params.id,
-      parsed.data.courseId,
-      parsed.data.code,
-      parsed.data.fileUrls
-    );
+    const submission = await submissionService.submitProject({
+      userId: req.user!.userId,
+      projectId: req.params.id,
+      courseId: parsed.data.courseId,
+      code: parsed.data.code,
+      fileUrls: parsed.data.fileUrls,
+    });
 
     res.status(201).json({ data: submission });
   } catch (err) {

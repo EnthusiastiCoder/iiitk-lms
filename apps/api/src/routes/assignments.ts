@@ -75,13 +75,13 @@ assignmentRouter.post("/:id/submit", async (req, res, next) => {
       throw new BadRequestError(parsed.error.issues[0].message);
     }
 
-    const submission = await submissionService.submitAssignment(
-      req.user!.userId,
-      req.params.id,
-      parsed.data.courseId,
-      parsed.data.code,
-      parsed.data.fileUrls
-    );
+    const submission = await submissionService.submitAssignment({
+      userId: req.user!.userId,
+      assignmentId: req.params.id,
+      courseId: parsed.data.courseId,
+      code: parsed.data.code,
+      fileUrls: parsed.data.fileUrls,
+    });
 
     res.status(201).json({ data: submission });
   } catch (err) {

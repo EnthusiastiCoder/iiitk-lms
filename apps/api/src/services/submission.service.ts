@@ -44,23 +44,25 @@ export async function getAssignment(
   };
 }
 
+/** Options for submitting an assignment. */
+interface SubmitAssignmentOptions {
+  userId: string;
+  assignmentId: string;
+  courseId: string;
+  code: string;
+  fileUrls?: string[];
+}
+
 /**
  * Submit code for an assignment.
- * @param userId - UUID of the authenticated user
- * @param assignmentId - UUID of the assignment
- * @param courseId - UUID of the course
- * @param code - Submitted code content
- * @param fileUrls - Optional array of uploaded file URLs
+ * @param options - Submission options
  * @returns The created submission record
  * @throws {BadRequestError} When the insert fails
  */
 export async function submitAssignment(
-  userId: string,
-  assignmentId: string,
-  courseId: string,
-  code: string,
-  fileUrls?: string[]
+  options: SubmitAssignmentOptions
 ): Promise<AssignmentSubmission> {
+  const { userId, assignmentId, courseId, code, fileUrls } = options;
   const { data, error } = await supabase
     .from("assignment_submissions")
     .insert({
@@ -116,23 +118,25 @@ export async function getProject(
   };
 }
 
+/** Options for submitting a project. */
+interface SubmitProjectOptions {
+  userId: string;
+  projectId: string;
+  courseId: string;
+  code: string;
+  fileUrls?: string[];
+}
+
 /**
  * Submit code for a project.
- * @param userId - UUID of the authenticated user
- * @param projectId - UUID of the project
- * @param courseId - UUID of the course
- * @param code - Submitted code content
- * @param fileUrls - Optional array of uploaded file URLs
+ * @param options - Submission options
  * @returns The created submission record
  * @throws {BadRequestError} When the insert fails
  */
 export async function submitProject(
-  userId: string,
-  projectId: string,
-  courseId: string,
-  code: string,
-  fileUrls?: string[]
+  options: SubmitProjectOptions
 ): Promise<ProjectSubmission> {
+  const { userId, projectId, courseId, code, fileUrls } = options;
   const { data, error } = await supabase
     .from("project_submissions")
     .insert({

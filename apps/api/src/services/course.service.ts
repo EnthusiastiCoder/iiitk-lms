@@ -93,7 +93,9 @@ export async function getCourseWithModules(
  * @param mod - The module to populate with content
  * @returns The module with all nested content arrays
  */
-async function populateModule(mod: Module) {
+async function populateModule(mod: Module): Promise<
+  Module & { lessons: Lesson[]; quizzes: Quiz[]; assignments: Assignment[]; projects: Project[] }
+> {
   const [lessonsResult, quizzesResult, assignmentsResult, projectsResult] =
     await Promise.all([
       supabase

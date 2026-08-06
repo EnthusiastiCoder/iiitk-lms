@@ -56,7 +56,11 @@ export async function getUserList(
  * @returns User profile, stats, and enrollments
  * @throws {NotFoundError} If the user is not found
  */
-export async function getUserById(userId: string) {
+export async function getUserById(userId: string): Promise<{
+  profile: Record<string, unknown>;
+  stats: Record<string, unknown> | null;
+  enrollments: Record<string, unknown>[];
+}> {
   const [profileRes, statsRes, enrollRes] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", userId).single(),
     supabase.from("user_stats").select("*").eq("user_id", userId).single(),
