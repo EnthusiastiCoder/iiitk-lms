@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
-import { getUserEnrollments, getUserCompletions, getCourses } from "@/actions/courses";
-import type { Course, Enrollment, LessonCompletion } from "@/types/database";
-import { Logger, safeFetch } from "@/lib/logger";
-
-const log = new Logger("student-profile");
+import { serverFetch } from "@/lib/server-api";
+import type {
+  Profile,
+  UserStats,
+  StreakLog,
+  Enrollment,
+  LessonCompletion,
+  Course,
+} from "@lms/shared";
 
 export const metadata: Metadata = {
   title: "Profile | IIIT Kalyani LMS",
@@ -35,38 +38,24 @@ const tierConfig: Record<string, { color: string; label: string }> = {
 };
 
 export default async function ProfilePage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user!.id)
-    .single();
-
-  const { data: stats } = await supabase
-    .from("user_stats")
-    .select("*")
-    .eq("user_id", user!.id)
-    .single();
-
-  const { data: streakData } = await supabase
-    .from("streak_log")
-    .select("activity_date, xp_earned, lessons_completed")
-    .eq("user_id", user!.id)
-    .order("activity_date", { ascending: false })
-    .limit(365);
-
-  const [_enrollments, _completions, _courses] = await Promise.all([
-    safeFetch(() => getUserEnrollments(), log),
-    safeFetch(() => getUserCompletions(), log),
-    safeFetch(() => getCourses(), log),
+  const [profileData, completions, courses] = await Promise.all([
+    serverFetch<{
+      profile: Profile;
+      stats: UserStats;
+      streaks: StreakLog[];
+      enrollments: Enrollment[];
+      completionCount: number;
+    }>("/profile"),
+    serverFetch<LessonCompletion[]>("/enrollments/completions"),
+    serverFetch<Course[]>("/courses"),
   ]);
-  const enrollments = _enrollments ?? [];
-  const completions = _completions ?? [];
-  const courses = _courses ?? [];
+
+  const profile = profileData?.profile ?? null;
+  const stats = profileData?.stats ?? null;
+  const streakData = profileData?.streaks ?? [];
+  const enrollments = profileData?.enrollments ?? [];
+  const safeCompletions = completions ?? [];
+  const safeCourses = courses ?? [];
 
   const tier = tierConfig[stats?.tier ?? "bronze"] ?? tierConfig.bronze;
   const userName = profile?.full_name ?? "Student";
@@ -77,11 +66,11 @@ export default async function ProfilePage() {
   const currentStreak = stats?.current_streak ?? 0;
   const longestStreak = stats?.longest_streak ?? 0;
 
-  const courseMap = new Map(courses.map((c: Course) => [c.id, c]));
+  const courseMap = new Map(safeCourses.map((c: Course) => [c.id, c]));
 
   const enrolledCourses = enrollments.map((e: Enrollment) => {
     const course = courseMap.get(e.course_id);
-    const courseCompletions = completions.filter(
+    const courseCompletions = safeCompletions.filter(
       (c: Pick<LessonCompletion, "course_id">) => c.course_id === e.course_id
     );
     return {
@@ -100,7 +89,7 @@ export default async function ProfilePage() {
     },
     {
       label: "Lessons Done",
-      value: completions.length.toString(),
+      value: safeCompletions.length.toString(),
       icon: BookOpen,
       color: "#1899D6",
     },
@@ -229,7 +218,7 @@ export default async function ProfilePage() {
           </CardHeader>
           <CardContent>
             <ActivityHeatmap
-              data={(streakData ?? []).map((d: { activity_date: string; xp_earned: number; lessons_completed: number }) => ({
+              data={streakData.map((d: { activity_date: string; xp_earned: number; lessons_completed: number }) => ({
                 date: d.activity_date,
                 xp: d.xp_earned,
                 lessons: d.lessons_completed,

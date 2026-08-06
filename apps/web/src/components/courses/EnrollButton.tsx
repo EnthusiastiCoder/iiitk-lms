@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { enrollInCourse } from "@/actions/courses";
+import { enrollments } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 
@@ -16,7 +16,7 @@ export function EnrollButton({ courseId }: EnrollButtonProps) {
 
   const handleEnroll = () => {
     startTransition(async () => {
-      await enrollInCourse(courseId);
+      await enrollments.enroll(courseId);
       router.refresh();
     });
   };

@@ -1,23 +1,50 @@
 "use client";
 
-import { useActionState, Suspense } from "react";
+import { useState, type FormEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Mail, Lock, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { login } from "@/actions/auth";
+import { auth, setTokens } from "@/lib/api";
+import { Suspense } from "react";
 
 function LoginForm() {
-  const [state, formAction, isPending] = useActionState(login, null);
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, setIsPending] = useState(false);
   const searchParams = useSearchParams();
   const urlError = searchParams.get("error");
+
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError(null);
+    setIsPending(true);
+
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+
+    if (!email || !password) {
+      setError("Email and password are required.");
+      setIsPending(false);
+      return;
+    }
+
+    try {
+      const result = await auth.login({ email, password });
+      setTokens(result.tokens);
+      window.location.href = "/student";
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Login failed.");
+      setIsPending(false);
+    }
+  }
 
   return (
     <Card className="w-full border-0 bg-card/80 backdrop-blur-sm">
       <CardContent className="pt-6">
-        <form action={formAction} className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="email" className="text-sm font-medium text-foreground">
               Email
@@ -52,9 +79,9 @@ function LoginForm() {
             </div>
           </div>
 
-          {(state?.error || urlError) && (
+          {(error || urlError) && (
             <div className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              {state?.error || urlError}
+              {error || urlError}
             </div>
           )}
 

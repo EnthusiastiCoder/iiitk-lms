@@ -1,8 +1,22 @@
-import { type NextRequest } from "next/server";
-import { updateSession } from "@/lib/supabase/middleware";
+import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
-  return await updateSession(request);
+  const token = request.cookies.get("lms_access_token")?.value;
+  const pathname = request.nextUrl.pathname;
+
+  if (!token && !pathname.startsWith("/auth") && pathname !== "/") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth/login";
+    return NextResponse.redirect(url);
+  }
+
+  if (token && pathname.startsWith("/auth")) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/student";
+    return NextResponse.redirect(url);
+  }
+
+  return NextResponse.next();
 }
 
 export const config = {

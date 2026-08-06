@@ -16,7 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { gradeSubmission } from "@/actions/submissions";
+import { submissions } from "@/lib/api";
 
 interface GradeDialogProps {
   submissionId: string;
@@ -44,7 +44,7 @@ export function GradeDialog({
     if (isNaN(numericGrade) || numericGrade < 0 || numericGrade > 100) return;
 
     startTransition(async () => {
-      await gradeSubmission(submissionId, submissionType, numericGrade, feedback);
+      await submissions.grade(submissionId, submissionType, numericGrade, feedback);
       setOpen(false);
       setGrade("");
       setFeedback("");

@@ -1,16 +1,11 @@
 import type { Metadata } from "next";
-import { getCourseWithModules, getUserCompletions, getUserEnrollments } from "@/actions/courses";
-import { getCourseBySlug } from "@/actions/courses";
+import { serverFetch } from "@/lib/server-api";
+import type { Course, CourseWithModules, Enrollment, LessonCompletion } from "@lms/shared";
 import { notFound } from "next/navigation";
-import type { Enrollment, LessonCompletion } from "@/types/database";
-import type { CourseWithModules } from "@/types/database";
 import { BookOpen, Clock, Zap, BarChart3 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CourseModules } from "@/components/courses/CourseModules";
 import { EnrollButton } from "@/components/courses/EnrollButton";
-import { Logger, safeFetch } from "@/lib/logger";
-
-const log = new Logger("student-course-detail");
 
 export async function generateMetadata({
   params,
@@ -18,7 +13,7 @@ export async function generateMetadata({
   params: Promise<{ courseSlug: string }>;
 }): Promise<Metadata> {
   const { courseSlug } = await params;
-  const course = await getCourseBySlug(courseSlug);
+  const course = await serverFetch<Course>(`/courses/${courseSlug}`);
   return {
     title: course
       ? `${course.title} | IIIT Kalyani LMS`
@@ -32,17 +27,18 @@ export default async function CourseDetailPage({
   params: Promise<{ courseSlug: string }>;
 }) {
   const { courseSlug } = await params;
-  const course = await getCourseWithModules(courseSlug);
+  const course = await serverFetch<CourseWithModules>(`/courses/${courseSlug}/full`);
   if (!course) notFound();
 
-  const [_completions, _enrollments] = await Promise.all([
-    safeFetch(() => getUserCompletions(course.id), log),
-    safeFetch(() => getUserEnrollments(), log),
+  const [completions, enrollments] = await Promise.all([
+    serverFetch<LessonCompletion[]>(`/enrollments/completions?courseId=${course.id}`),
+    serverFetch<Enrollment[]>("/enrollments"),
   ]);
-  const completions = _completions ?? [];
-  const enrollments = _enrollments ?? [];
-  const isEnrolled = enrollments.some((e: Enrollment) => e.course_id === course.id);
-  const completedIds = new Set(completions.map((c: Pick<LessonCompletion, "lesson_id">) => c.lesson_id));
+
+  const safeCompletions = completions ?? [];
+  const safeEnrollments = enrollments ?? [];
+  const isEnrolled = safeEnrollments.some((e: Enrollment) => e.course_id === course.id);
+  const completedIds = new Set(safeCompletions.map((c: Pick<LessonCompletion, "lesson_id">) => c.lesson_id));
   const totalLessons =
     course.total_lessons ??
     course.modules.reduce(

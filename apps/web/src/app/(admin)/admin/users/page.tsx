@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getUserList } from "@/actions/admin";
+import { serverFetch } from "@/lib/server-api";
 
 export const metadata: Metadata = {
   title: "User Management | IIIT Kalyani LMS",
@@ -14,10 +14,12 @@ import { Users, Shield } from "lucide-react";
 import Link from "next/link";
 import { UserSearch } from "@/components/admin/UserSearch";
 import { UserActions } from "@/components/admin/UserActions";
-import { Logger, safeFetch } from "@/lib/logger";
 import type { Profile, UserStats } from "@/types/database";
 
-const log = new Logger("admin-users");
+interface PaginatedUsers {
+  items: Array<Profile & { user_stats: UserStats[] | UserStats | null }>;
+  total: number;
+}
 
 export default async function UsersPage({
   searchParams,
@@ -30,8 +32,14 @@ export default async function UsersPage({
   const page = parseInt(params.page ?? "0", 10);
   const pageSize = 20;
 
-  const result = await safeFetch(() => getUserList({ search, role, page, pageSize }), log);
-  const users = result?.users ?? [];
+  const query = new URLSearchParams();
+  if (search) query.set("search", search);
+  if (role !== "all") query.set("role", role);
+  query.set("page", String(page));
+  query.set("limit", String(pageSize));
+
+  const result = await serverFetch<PaginatedUsers>(`/admin/users?${query.toString()}`);
+  const users = result?.items ?? [];
   const total = result?.total ?? 0;
 
   const totalPages = Math.ceil(total / pageSize);

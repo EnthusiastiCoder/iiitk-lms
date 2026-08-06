@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createLesson } from "@/actions/content";
+import { professor } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -85,7 +85,7 @@ export function CreateLessonDialog({
 
     startTransition(async () => {
       try {
-        await createLesson(moduleId, courseId, {
+        await professor.createLesson(moduleId, courseId, {
           title: title.trim(),
           description: description.trim(),
           type,

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getUserSubmissions } from "@/actions/submissions";
+import { serverFetch } from "@/lib/server-api";
 
 export const metadata: Metadata = {
   title: "Submissions | IIIT Kalyani LMS",
@@ -40,7 +40,7 @@ function formatDate(dateStr: string | null) {
   });
 }
 
-function SubmissionRow({
+function SubmissionRowComponent({
   title,
   type,
   status,
@@ -93,7 +93,13 @@ function SubmissionRow({
 }
 
 export default async function SubmissionsPage() {
-  const { assignments, projects } = await getUserSubmissions();
+  const data = await serverFetch<{
+    assignments: SubmissionBase[];
+    projects: SubmissionBase[];
+  }>("/submissions");
+
+  const assignments = data?.assignments ?? [];
+  const projects = data?.projects ?? [];
 
   const allSubmissions = [
     ...assignments.map((a: SubmissionBase) => ({ ...a, _type: "assignment" as const })),
@@ -158,7 +164,7 @@ export default async function SubmissionsPage() {
               <CardContent className="p-0 px-4">
                 {allSubmissions.length > 0 ? (
                   allSubmissions.map((sub: SubmissionRow) => (
-                    <SubmissionRow
+                    <SubmissionRowComponent
                       key={sub.id}
                       title={
                         sub.assignment_id ??
@@ -184,7 +190,7 @@ export default async function SubmissionsPage() {
               <CardContent className="p-0 px-4">
                 {pending.length > 0 ? (
                   pending.map((sub: SubmissionRow) => (
-                    <SubmissionRow
+                    <SubmissionRowComponent
                       key={sub.id}
                       title={
                         sub.assignment_id ??
@@ -210,7 +216,7 @@ export default async function SubmissionsPage() {
               <CardContent className="p-0 px-4">
                 {graded.length > 0 ? (
                   graded.map((sub: SubmissionRow) => (
-                    <SubmissionRow
+                    <SubmissionRowComponent
                       key={sub.id}
                       title={
                         sub.assignment_id ??

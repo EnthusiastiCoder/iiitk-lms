@@ -1,11 +1,7 @@
 import type { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
-import { getUserEnrollments } from "@/actions/courses";
-import type { Enrollment, Quiz, Course } from "@/types/database";
+import { serverFetch } from "@/lib/server-api";
+import type { Quiz } from "@lms/shared";
 import Link from "next/link";
-import { Logger, safeFetch } from "@/lib/logger";
-
-const log = new Logger("student-practice");
 
 export const metadata: Metadata = {
   title: "Practice | IIIT Kalyani LMS",
@@ -17,7 +13,7 @@ import {
   Zap,
   PlayCircle,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FadeIn } from "@/components/motion/fade-in";
 
@@ -37,43 +33,18 @@ interface QuizAttempt {
   completed_at: string;
 }
 
-type CourseInfo = Pick<Course, "id" | "title" | "slug">;
+type CourseInfo = { id: string; title: string; slug: string };
 
 export default async function PracticePage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const data = await serverFetch<{
+    quizzes: Quiz[];
+    attempts: QuizAttempt[];
+    courses: CourseInfo[];
+  }>("/practice");
 
-  const enrollments = await safeFetch(() => getUserEnrollments(), log) ?? [];
-  const enrolledCourseIds = enrollments.map((e: Pick<Enrollment, "course_id">) => e.course_id);
-
-  let quizzes: Quiz[] = [];
-  let attempts: QuizAttempt[] = [];
-  let courses: CourseInfo[] = [];
-
-  if (enrolledCourseIds.length > 0) {
-    const [quizResult, attemptResult, courseResult] = await Promise.all([
-      supabase
-        .from("quizzes")
-        .select("*")
-        .in("course_id", enrolledCourseIds)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("quiz_attempts")
-        .select("*")
-        .eq("user_id", user!.id)
-        .order("completed_at", { ascending: false }),
-      supabase
-        .from("courses")
-        .select("id, title, slug")
-        .in("id", enrolledCourseIds),
-    ]);
-
-    quizzes = quizResult.data ?? [];
-    attempts = attemptResult.data ?? [];
-    courses = courseResult.data ?? [];
-  }
+  const quizzes = data?.quizzes ?? [];
+  const attempts = data?.attempts ?? [];
+  const courses = data?.courses ?? [];
 
   const courseMap = new Map(courses.map((c: CourseInfo) => [c.id, c]));
   const attemptsByQuiz = new Map<string, QuizAttempt[]>();

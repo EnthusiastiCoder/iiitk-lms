@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
-import {
-  getCourses,
-  getUserEnrollments,
-  getUserCompletions,
-} from "@/actions/courses";
+import { serverFetch } from "@/lib/server-api";
+import type { Course, Enrollment, LessonCompletion } from "@lms/shared";
 
 export const metadata: Metadata = {
   title: "Courses | IIIT Kalyani LMS",
@@ -12,9 +9,9 @@ import { CoursesCatalog } from "@/components/courses/CoursesCatalog";
 
 export default async function CoursesPage() {
   const [courses, enrollments, completions] = await Promise.all([
-    getCourses(),
-    getUserEnrollments(),
-    getUserCompletions(),
+    serverFetch<Course[]>("/courses"),
+    serverFetch<Enrollment[]>("/enrollments"),
+    serverFetch<LessonCompletion[]>("/enrollments/completions"),
   ]);
 
   return (
@@ -26,9 +23,9 @@ export default async function CoursesPage() {
         </p>
       </div>
       <CoursesCatalog
-        courses={courses}
-        enrollments={enrollments}
-        completions={completions}
+        courses={courses ?? []}
+        enrollments={enrollments ?? []}
+        completions={completions ?? []}
       />
     </div>
   );

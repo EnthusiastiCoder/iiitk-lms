@@ -1,24 +1,27 @@
-import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { serverFetch } from "@/lib/api";
 import { ProfessorSidebar } from "@/components/professor/ProfessorSidebar";
 import { ProfessorMobileNav } from "@/components/professor/ProfessorMobileNav";
+import type { Profile } from "@lms/shared";
 
 export default async function ProfessorLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const cookieStore = await cookies();
+  const token = cookieStore.get("lms_access_token")?.value;
+  if (!token) redirect("/auth/login");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
+  let profile: Profile | null = null;
+
+  try {
+    const data = await serverFetch<{ profile: Profile }>("/profile", token);
+    profile = data.profile;
+  } catch {
+    redirect("/auth/login");
+  }
 
   if (!profile || (profile.role !== "professor" && profile.role !== "admin")) {
     redirect("/student");

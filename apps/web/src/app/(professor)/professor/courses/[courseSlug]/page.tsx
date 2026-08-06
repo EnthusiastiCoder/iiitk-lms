@@ -1,5 +1,4 @@
-import { getCourseContentForProfessor } from "@/actions/content";
-import { getClassStats } from "@/actions/professor";
+import { serverFetch } from "@/lib/server-api";
 import type { CourseWithModules, Lesson, Quiz, Assignment, Project } from "@/types/database";
 import {
   Card,
@@ -41,9 +40,6 @@ import { EditQuizDialog } from "@/components/professor/EditQuizDialog";
 import { EditAssignmentDialog } from "@/components/professor/EditAssignmentDialog";
 import { EditProjectDialog } from "@/components/professor/EditProjectDialog";
 import { DeleteConfirmDialog } from "@/components/professor/DeleteConfirmDialog";
-import { Logger, safeFetch } from "@/lib/logger";
-
-const log = new Logger("professor-course-detail");
 
 import {
   deleteModule,
@@ -51,7 +47,7 @@ import {
   deleteQuiz,
   deleteAssignment,
   deleteProject,
-} from "@/actions/content";
+} from "@/lib/server-mutations";
 
 interface ClassStat {
   courseId: string;
@@ -73,9 +69,9 @@ export default async function CourseDetailPage({
 }) {
   const { courseSlug } = await params;
 
-  const course = await safeFetch(() => getCourseContentForProfessor(courseSlug), log) as CourseContent;
+  const course = await serverFetch<CourseWithModules>(`/professor/courses/${courseSlug}/content`) as CourseContent;
 
-  const allStats = await safeFetch(() => getClassStats(), log);
+  const allStats = await serverFetch<ClassStat[]>("/professor/stats");
   const stats: ClassStat | null = allStats?.find((s: ClassStat) => s.courseSlug === courseSlug) ?? null;
 
   if (!course) {

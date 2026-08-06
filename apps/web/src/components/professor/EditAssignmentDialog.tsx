@@ -25,7 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { updateAssignment } from "@/actions/content";
+import { professor } from "@/lib/api";
 
 interface EditAssignmentDialogProps {
   assignmentId: string;
@@ -105,7 +105,7 @@ export function EditAssignmentDialog({
 
     startTransition(async () => {
       try {
-        await updateAssignment(assignmentId, {
+        await professor.updateAssignment(assignmentId, {
           title: title.trim(),
           description: description.trim(),
           difficulty,

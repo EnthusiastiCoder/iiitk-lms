@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { updateUserRole, deleteUser } from "@/actions/admin";
+import { admin } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -40,7 +40,7 @@ export function UserActions({
     if (newRole === currentRole) return;
     startTransition(async () => {
       try {
-        await updateUserRole(userId, newRole);
+        await admin.updateRole(userId, newRole);
         router.refresh();
       } catch (err: unknown) {
         alert(err instanceof Error ? err.message : "Failed to update role");
@@ -51,7 +51,7 @@ export function UserActions({
   const handleDelete = () => {
     startTransition(async () => {
       try {
-        await deleteUser(userId);
+        await admin.deleteUser(userId);
         setDeleteOpen(false);
         router.refresh();
       } catch (err: unknown) {

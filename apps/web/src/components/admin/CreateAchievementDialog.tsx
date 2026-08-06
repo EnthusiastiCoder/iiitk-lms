@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createAchievement } from "@/actions/admin";
+import { admin } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -41,10 +41,10 @@ export function CreateAchievementDialog() {
 
     startTransition(async () => {
       try {
-        await createAchievement({
+        await admin.createAchievement({
           title,
           description,
-          icon: icon || "🏆",
+          icon: icon || "\u{1F3C6}",
           category,
           rarity,
           xp_reward: parseInt(xpReward, 10) || 50,

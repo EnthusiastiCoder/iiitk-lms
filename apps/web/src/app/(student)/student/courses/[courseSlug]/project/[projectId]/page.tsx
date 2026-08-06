@@ -1,6 +1,28 @@
-import { createClient } from "@/lib/supabase/server";
+import { serverFetch } from "@/lib/server-api";
 import { notFound } from "next/navigation";
 import { CodeSubmission } from "@/components/submissions/CodeSubmission";
+
+interface Project {
+  id: string;
+  course_id: string;
+  title: string;
+  description: string | null;
+  difficulty: string | null;
+  xp_reward: number | null;
+  language: string | null;
+  starter_code: string | null;
+  requirements: string[] | null;
+}
+
+interface Submission {
+  id: string;
+  code: string;
+  status: string;
+  grade: number | null;
+  feedback: string | null;
+  submitted_at: string;
+  file_urls: string[] | null;
+}
 
 export default async function ProjectPage({
   params,
@@ -8,32 +30,15 @@ export default async function ProjectPage({
   params: Promise<{ courseSlug: string; projectId: string }>;
 }) {
   const { courseSlug, projectId } = await params;
-  const supabase = await createClient();
 
-  const { data: project } = await supabase
-    .from("projects")
-    .select("*")
-    .eq("id", projectId)
-    .single();
+  const data = await serverFetch<{
+    project: Project;
+    submission: Submission | null;
+  }>(`/projects/${projectId}`);
 
-  if (!project) notFound();
+  if (!data?.project) notFound();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  let existingSubmission = null;
-  if (user) {
-    const { data } = await supabase
-      .from("project_submissions")
-      .select("id, code, status, grade, feedback, submitted_at, file_urls")
-      .eq("project_id", projectId)
-      .eq("user_id", user.id)
-      .order("submitted_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    existingSubmission = data;
-  }
+  const { project, submission: existingSubmission } = data;
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 h-full overflow-y-auto">

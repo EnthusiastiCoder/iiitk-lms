@@ -1,4 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
+import { serverFetch } from "@/lib/server-api";
+import type { Quiz, QuizQuestion } from "@lms/shared";
 import { notFound } from "next/navigation";
 import { QuizTaker } from "@/components/quiz/QuizTaker";
 
@@ -8,21 +9,14 @@ export default async function QuizPage({
   params: Promise<{ courseSlug: string; quizId: string }>;
 }) {
   const { courseSlug, quizId } = await params;
-  const supabase = await createClient();
 
-  const { data: quiz } = await supabase
-    .from("quizzes")
-    .select("*")
-    .eq("id", quizId)
-    .single();
+  const data = await serverFetch<{ quiz: Quiz; questions: QuizQuestion[] }>(
+    `/quizzes/${quizId}`
+  );
 
-  if (!quiz) notFound();
+  if (!data?.quiz) notFound();
 
-  const { data: questions } = await supabase
-    .from("quiz_questions")
-    .select("id, quiz_id, type, question, options, correct_answer, explanation, xp_reward, \"order\"")
-    .eq("quiz_id", quizId)
-    .order("order");
+  const { quiz, questions } = data;
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 h-full overflow-y-auto">

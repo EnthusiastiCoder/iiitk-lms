@@ -15,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { completeLesson } from "@/actions/lessons";
+import { lessons } from "@/lib/api";
 import { FlashcardDeck } from "@/components/flashcard/FlashcardDeck";
 import { XpCelebration } from "@/components/xp/XpCelebration";
 import { SectionRenderer } from "./SectionRenderer";
@@ -76,14 +76,14 @@ export function LessonViewer({
 
   const handleComplete = () => {
     startTransition(async () => {
-      const result = await completeLesson(lesson.id, lesson.course_id);
+      const result = await lessons.complete(lesson.id, lesson.course_id);
       setCompleted(true);
-      if (!result.already) {
+      if (!result.alreadyCompleted) {
         setXpEarned(result.xpEarned);
         setCelebration({
           xp: result.xpEarned,
-          leveledUp: result.leveledUp ?? false,
-          newLevel: result.newLevel,
+          leveledUp: (result as Record<string, unknown>).leveledUp as boolean ?? false,
+          newLevel: (result as Record<string, unknown>).newLevel as number | undefined,
         });
         setTimeout(() => setXpEarned(null), 3000);
       }

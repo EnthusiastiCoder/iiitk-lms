@@ -2,9 +2,7 @@
 
 import { useState, useTransition, useRef } from "react";
 import Link from "next/link";
-import { submitAssignment, submitProject } from "@/actions/submissions";
-import { addFileToSubmission } from "@/actions/upload";
-import { createClient } from "@/lib/supabase/client";
+import { assignments, projects, upload } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -80,38 +78,14 @@ export function CodeSubmission({
 
     setIsUploading(true);
     try {
-      const supabase = createClient();
-      const { data: userData } = await supabase.auth.getUser();
-      const userId = userData.user?.id;
-      if (!userId) return;
-
-      const ext = file.name.split(".").pop();
-      const filePath = `${userId}/${itemId}/${Date.now()}-${file.name}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("submissions")
-        .upload(filePath, file);
-
-      if (uploadError) {
-        console.error("Upload failed:", uploadError);
-        alert("File upload failed. Please try again.");
-        return;
-      }
-
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("submissions").getPublicUrl(filePath);
+      const { url } = await upload.file(file);
 
       // If there's an existing submission, persist to DB immediately
       if (existingSubmission?.id) {
-        await addFileToSubmission(
-          existingSubmission.id,
-          submissionTable,
-          filePath
-        );
+        await upload.attach(existingSubmission.id, submissionTable, url);
       }
 
-      setUploadedFiles((prev) => [...prev, filePath]);
+      setUploadedFiles((prev) => [...prev, url]);
     } catch (err) {
       console.error("Upload error:", err);
       alert("File upload failed. Please try again.");
@@ -121,35 +95,24 @@ export function CodeSubmission({
     }
   };
 
-  const handleRemoveFile = async (filePath: string) => {
-    const supabase = createClient();
-    await supabase.storage.from("submissions").remove([filePath]);
-    setUploadedFiles((prev) => prev.filter((f) => f !== filePath));
+  const handleRemoveFile = (fileUrl: string) => {
+    setUploadedFiles((prev) => prev.filter((f) => f !== fileUrl));
   };
 
-  const getFileName = (filePath: string) => {
-    const parts = filePath.split("/");
-    const name = parts[parts.length - 1];
-    // Strip the timestamp prefix
-    const dashIndex = name.indexOf("-");
-    return dashIndex !== -1 ? name.substring(dashIndex + 1) : name;
+  const getFileName = (fileUrl: string) => {
+    const parts = fileUrl.split("/");
+    return parts[parts.length - 1] || fileUrl;
   };
 
-  const getDownloadUrl = (filePath: string) => {
-    const supabase = createClient();
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from("submissions").getPublicUrl(filePath);
-    return publicUrl;
-  };
+  const getDownloadUrl = (fileUrl: string) => fileUrl;
 
   const handleSubmit = () => {
     if (!code.trim()) return;
     startTransition(async () => {
       if (type === "assignment") {
-        await submitAssignment(itemId, courseId, code, uploadedFiles);
+        await assignments.submit(itemId, courseId, code, uploadedFiles);
       } else {
-        await submitProject(itemId, courseId, code, uploadedFiles);
+        await projects.submit(itemId, courseId, code, uploadedFiles);
       }
       setSubmitted(true);
     });

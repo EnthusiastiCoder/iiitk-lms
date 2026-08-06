@@ -1,18 +1,59 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { Mail, Lock, User, GraduationCap, Loader2, CheckCircle2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { register } from "@/actions/auth";
+import { auth, setTokens } from "@/lib/api";
 
 export default function RegisterPage() {
-  const [state, formAction, isPending] = useActionState(register, null);
-  const [role, setRole] = useState("student");
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, setIsPending] = useState(false);
+  const [confirmEmail, setConfirmEmail] = useState(false);
+  const [role, setRole] = useState<"student" | "professor">("student");
 
-  if (state?.confirmEmail) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError(null);
+    setIsPending(true);
+
+    const formData = new FormData(e.currentTarget);
+    const full_name = formData.get("fullName") as string;
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+
+    if (!full_name || !email || !password) {
+      setError("All fields are required.");
+      setIsPending(false);
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      setIsPending(false);
+      return;
+    }
+
+    try {
+      const result = await auth.register({ email, password, full_name, role });
+
+      if (result.confirmationRequired) {
+        setConfirmEmail(true);
+        setIsPending(false);
+        return;
+      }
+
+      setTokens(result.tokens);
+      window.location.href = "/student";
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Registration failed.");
+      setIsPending(false);
+    }
+  }
+
+  if (confirmEmail) {
     return (
       <Card className="w-full border-0 bg-card/80 backdrop-blur-sm">
         <CardContent className="pt-6">
@@ -43,7 +84,7 @@ export default function RegisterPage() {
   return (
     <Card className="w-full border-0 bg-card/80 backdrop-blur-sm">
       <CardContent className="pt-6">
-        <form action={formAction} className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="fullName" className="text-sm font-medium text-foreground">
               Full Name
@@ -109,7 +150,7 @@ export default function RegisterPage() {
                 id="role"
                 name="role"
                 value={role}
-                onChange={(e) => setRole(e.target.value)}
+                onChange={(e) => setRole(e.target.value as "student" | "professor")}
                 className="h-10 w-full appearance-none rounded-lg border border-input bg-transparent pl-9 pr-3 text-sm text-foreground outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
               >
                 <option value="student">Student</option>
@@ -118,9 +159,9 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          {state?.error && (
+          {error && (
             <div className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              {state.error}
+              {error}
             </div>
           )}
 

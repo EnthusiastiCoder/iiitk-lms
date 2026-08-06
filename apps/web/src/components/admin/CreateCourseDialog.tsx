@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createCourse } from "@/actions/admin";
+import { admin } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -50,7 +50,7 @@ export function CreateCourseDialog() {
 
     startTransition(async () => {
       try {
-        await createCourse({ title, slug, description, difficulty, category });
+        await admin.createCourse({ title, slug, description, difficulty, category });
         setOpen(false);
         setTitle("");
         setSlug("");

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getSystemStats, getAuditLog } from "@/actions/admin";
+import { serverFetch } from "@/lib/server-api";
 
 export const metadata: Metadata = {
   title: "Admin Dashboard | IIIT Kalyani LMS",
@@ -22,7 +22,17 @@ import {
   FileText,
 } from "lucide-react";
 import Link from "next/link";
-import { Logger, safeFetch } from "@/lib/logger";
+
+interface SystemStats {
+  totalUsers: number;
+  students: number;
+  professors: number;
+  admins: number;
+  totalCourses: number;
+  totalLessons: number;
+  totalSubmissions: number;
+  totalXpEarned: number;
+}
 
 interface XpTransaction {
   id: string;
@@ -33,10 +43,8 @@ interface XpTransaction {
   profiles: { full_name: string; email: string } | null;
 }
 
-const log = new Logger("admin-dashboard");
-
 export default async function AdminDashboard() {
-  const defaultStats = {
+  const defaultStats: SystemStats = {
     totalUsers: 0,
     students: 0,
     professors: 0,
@@ -46,8 +54,8 @@ export default async function AdminDashboard() {
     totalSubmissions: 0,
     totalXpEarned: 0,
   };
-  const stats = await safeFetch(() => getSystemStats(), log) ?? defaultStats;
-  const auditLog = await safeFetch(() => getAuditLog(), log) ?? [];
+  const stats = await serverFetch<SystemStats>("/admin/stats") ?? defaultStats;
+  const auditLog = await serverFetch<XpTransaction[]>("/admin/audit-log") ?? [];
 
   const recentActivity = auditLog.slice(0, 10);
 

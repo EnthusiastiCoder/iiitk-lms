@@ -1,18 +1,22 @@
 import type { Metadata } from "next";
-import { getUserAchievements } from "@/actions/gamification";
-import { Logger, safeFetch } from "@/lib/logger";
-
-const log = new Logger("student-achievements");
+import { serverFetch } from "@/lib/server-api";
+import type { Achievement } from "@lms/shared";
 
 export const metadata: Metadata = {
   title: "Achievements | IIIT Kalyani LMS",
 };
-import type { Achievement, UserAchievement } from "@/types/database";
+
 import { Trophy, Lock, Star, Flame, Users, BookOpen, Award } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { FadeIn } from "@/components/motion/fade-in";
+
+type AchievementWithStatus = Achievement & {
+  progress: number;
+  earned: boolean;
+  earned_at: string | null;
+};
 
 const categoryConfig: Record<
   string,
@@ -96,19 +100,20 @@ function AchievementCard({
 }
 
 export default async function AchievementsPage() {
-  const { achievements, userAchievements } = await safeFetch(() => getUserAchievements(), log) ?? { achievements: [], userAchievements: [] };
+  const allAchievements =
+    (await serverFetch<AchievementWithStatus[]>("/gamification/achievements")) ?? [];
 
   const earnedIds = new Set(
-    userAchievements.map((ua: UserAchievement) => ua.achievement_id)
+    allAchievements.filter((a) => a.earned).map((a) => a.id)
   );
   const earnedCount = earnedIds.size;
-  const totalCount = achievements.length;
+  const totalCount = allAchievements.length;
 
   const categories = ["all", "learning", "streak", "social", "mastery"];
 
   function filterByCategory(cat: string) {
-    if (cat === "all") return achievements;
-    return achievements.filter((a: Achievement) => a.category === cat);
+    if (cat === "all") return allAchievements;
+    return allAchievements.filter((a: Achievement) => a.category === cat);
   }
 
   return (

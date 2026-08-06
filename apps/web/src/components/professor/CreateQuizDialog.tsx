@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { createQuiz, createQuizQuestion } from "@/actions/content";
+import { professor } from "@/lib/api";
 
 interface CreateQuizDialogProps {
   moduleId: string;
@@ -102,7 +102,7 @@ export function CreateQuizDialog({
 
     startTransition(async () => {
       try {
-        const result = await createQuiz(moduleId, courseId, {
+        const result = await professor.createQuiz(moduleId, courseId, {
           title: title.trim(),
           description: description.trim(),
           timeLimit,
@@ -139,7 +139,7 @@ export function CreateQuizDialog({
 
     startTransition(async () => {
       try {
-        await createQuizQuestion(quizId, {
+        await professor.createQuizQuestion(quizId, {
           type: questionType,
           question: question.trim(),
           options: getOptionsForType(),

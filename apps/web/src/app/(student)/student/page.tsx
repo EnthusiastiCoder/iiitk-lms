@@ -4,16 +4,15 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Dashboard | IIIT Kalyani LMS",
 };
-import { createClient } from "@/lib/supabase/server";
-import {
-  getUserEnrollments,
-  getUserCompletions,
-  getCourses,
-} from "@/actions/courses";
-import { getWeeklyXp } from "@/actions/gamification";
-import { Logger, safeFetch } from "@/lib/logger";
 
-const log = new Logger("student-dashboard");
+import { serverFetch } from "@/lib/server-api";
+import type {
+  Profile,
+  UserStats,
+  Enrollment,
+  LessonCompletion,
+  Course,
+} from "@lms/shared";
 import {
   BookOpen,
   ChevronRight,
@@ -28,41 +27,30 @@ import { WeeklyXpChart } from "@/components/dashboard/WeeklyXpChart";
 const dayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 export default async function StudentDashboard() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const [profileData, enrollments, completions, courses, weeklyXpData, leaderboard] =
+    await Promise.all([
+      serverFetch<{ profile: Profile; stats: UserStats }>("/profile"),
+      serverFetch<Enrollment[]>("/enrollments"),
+      serverFetch<LessonCompletion[]>("/enrollments/completions"),
+      serverFetch<Course[]>("/courses"),
+      serverFetch<{ date: string; xp: number }[]>("/gamification/weekly-xp"),
+      serverFetch<{ userId: string; rank: number }[]>("/gamification/leaderboard"),
+    ]);
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user!.id)
-    .single();
+  const profile = profileData?.profile ?? null;
+  const stats = profileData?.stats ?? null;
+  const safeEnrollments = enrollments ?? [];
+  const safeCompletions = completions ?? [];
+  const safeCourses = courses ?? [];
+  const weeklyXp =
+    weeklyXpData && weeklyXpData.length > 0
+      ? weeklyXpData.map((d) => d.xp)
+      : [0, 0, 0, 0, 0, 0, 0];
 
-  const { data: stats } = await supabase
-    .from("user_stats")
-    .select("*")
-    .eq("user_id", user!.id)
-    .single();
-
-  const [_enrollments, _completions, _courses, _weeklyXp] = await Promise.all([
-    safeFetch(() => getUserEnrollments(), log),
-    safeFetch(() => getUserCompletions(), log),
-    safeFetch(() => getCourses(), log),
-    safeFetch(() => getWeeklyXp(), log),
-  ]);
-  const enrollments = _enrollments ?? [];
-  const completions = _completions ?? [];
-  const courses = _courses ?? [];
-  const weeklyXp = _weeklyXp ?? [0, 0, 0, 0, 0, 0, 0];
-
-  // Compute rank (count users with more XP)
-  const { count: usersAbove } = await supabase
-    .from("user_stats")
-    .select("*", { count: "exact", head: true })
-    .gt("total_xp", stats?.total_xp ?? 0);
-
-  const rank = (usersAbove ?? 0) + 1;
+  // Compute rank from leaderboard
+  const userId = profile?.id;
+  const leaderboardEntry = leaderboard?.find((e) => e.userId === userId);
+  const rank = leaderboardEntry?.rank ?? (leaderboard?.length ?? 0) + 1;
 
   const userName = profile?.full_name ?? "Student";
   const firstName = userName.split(" ")[0];
@@ -78,11 +66,11 @@ export default async function StudentDashboard() {
   interface EnrollmentRow { course_id: string; enrolled_at: string; [key: string]: unknown }
   interface CompletionRow { course_id: string; lesson_id: string; [key: string]: unknown }
 
-  const courseMap = new Map(courses.map((c: CourseRow) => [c.id, c]));
+  const courseMap = new Map(safeCourses.map((c: CourseRow) => [c.id, c]));
 
-  const enrolledCourses = enrollments.map((e: EnrollmentRow) => {
+  const enrolledCourses = safeEnrollments.map((e: EnrollmentRow) => {
     const course = courseMap.get(e.course_id);
-    const courseCompletions = completions.filter(
+    const courseCompletions = safeCompletions.filter(
       (c: CompletionRow) => c.course_id === e.course_id
     );
     return {
@@ -119,7 +107,7 @@ export default async function StudentDashboard() {
 
       {/* Quick Stats */}
       <StatsGrid
-        lessonsDone={completions.length.toString()}
+        lessonsDone={safeCompletions.length.toString()}
         totalXp={totalXp.toLocaleString()}
         dayStreak={currentStreak.toString()}
         rank={`#${rank}`}

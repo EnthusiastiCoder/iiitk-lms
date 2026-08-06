@@ -1,32 +1,35 @@
-import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { serverFetch } from "@/lib/api";
 import { StudentSidebar } from "@/components/layout/StudentSidebar";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { GradingNotifier } from "@/components/realtime/GradingNotifier";
 import { ToastContainer } from "@/components/ui/toast-notification";
+import type { Profile } from "@lms/shared";
 
 export default async function StudentLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const cookieStore = await cookies();
+  const token = cookieStore.get("lms_access_token")?.value;
+  if (!token) redirect("/auth/login");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
+  let profile: Profile | null = null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let stats: any = null;
 
-  const { data: stats } = await supabase
-    .from("user_stats")
-    .select("*")
-    .eq("user_id", user.id)
-    .single();
+  try {
+    const data = await serverFetch<{
+      profile: Profile;
+      stats: unknown;
+    }>("/profile", token);
+    profile = data.profile;
+    stats = data.stats;
+  } catch {
+    redirect("/auth/login");
+  }
 
   return (
     <div className="flex h-screen w-screen overflow-hidden">
@@ -39,7 +42,7 @@ export default async function StudentLayout({
         <MobileNav profile={profile} stats={stats} />
         <main className="flex-1 min-h-0">{children}</main>
       </div>
-      <GradingNotifier userId={user.id} />
+      <GradingNotifier userId={profile!.id} />
       <ToastContainer />
     </div>
   );

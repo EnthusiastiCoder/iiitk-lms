@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { updateProfile } from "@/actions/profile";
+import { profile } from "@/lib/api";
 import {
   Dialog,
   DialogTrigger,
@@ -31,15 +31,12 @@ export function ProfileEditor({ currentName, email }: ProfileEditorProps) {
     e.preventDefault();
     setError(null);
 
-    const formData = new FormData();
-    formData.set("full_name", name);
-
     startTransition(async () => {
-      const result = await updateProfile(formData);
-      if (result?.error) {
-        setError(result.error);
-      } else {
+      try {
+        await profile.update(name);
         setOpen(false);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to update profile");
       }
     });
   }

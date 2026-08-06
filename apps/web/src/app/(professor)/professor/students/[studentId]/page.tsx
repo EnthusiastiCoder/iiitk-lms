@@ -1,5 +1,4 @@
-import { getStudentDetail } from "@/actions/professor";
-import { getCourses } from "@/actions/courses";
+import { serverFetch } from "@/lib/server-api";
 import type { Course } from "@/types/database";
 import {
   Card,
@@ -19,9 +18,22 @@ import {
   GraduationCap,
 } from "lucide-react";
 import Link from "next/link";
-import { Logger, safeFetch } from "@/lib/logger";
 
-const log = new Logger("professor-student-detail");
+interface StudentDetail {
+  profile: {
+    full_name: string | null;
+    email: string;
+    department?: string;
+  };
+  stats: {
+    level: number;
+    total_xp: number;
+    current_streak: number;
+  } | null;
+  enrolledCourseIds: string[];
+  completions: Array<{ course_id: string }>;
+  quizAttempts: Array<{ quiz_id: string; score: number; completed_at: string }>;
+}
 
 export default async function StudentDetailPage({
   params,
@@ -30,8 +42,8 @@ export default async function StudentDetailPage({
 }) {
   const { studentId } = await params;
 
-  const detail = await safeFetch(() => getStudentDetail(studentId), log);
-  const allCourses = await safeFetch(() => getCourses(), log) ?? [];
+  const detail = await serverFetch<StudentDetail>(`/professor/students/${studentId}`);
+  const allCourses = await serverFetch<Course[]>("/courses") ?? [];
 
   if (!detail?.profile) {
     return (

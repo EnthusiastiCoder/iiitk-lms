@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { submitQuizAttempt } from "@/actions/submissions";
+import { quizzes } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import {
   ArrowLeft,
@@ -61,8 +61,8 @@ export function QuizTaker({
     const timeSpent = timeLimit * 60 - timeRemaining;
 
     try {
-      const result = await submitQuizAttempt(quizId, answers, score, timeSpent);
-      setResults({ score: result.score, xpEarned: result.xpEarned });
+      const result = await quizzes.attempt(quizId, answers, score, timeSpent);
+      setResults({ score, xpEarned: result.xpEarned });
       setIsSubmitted(true);
     } catch {
       // Allow retry on error

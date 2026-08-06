@@ -17,7 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { updateQuiz } from "@/actions/content";
+import { professor } from "@/lib/api";
 
 interface EditQuizDialogProps {
   quizId: string;
@@ -61,7 +61,7 @@ export function EditQuizDialog({
 
     startTransition(async () => {
       try {
-        await updateQuiz(quizId, {
+        await professor.updateQuiz(quizId, {
           title: title.trim(),
           description: description.trim(),
           timeLimit,

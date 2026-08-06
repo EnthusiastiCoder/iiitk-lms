@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
-import { getClassStats } from "@/actions/professor";
+import { serverFetch } from "@/lib/server-api";
 
 export const metadata: Metadata = {
   title: "Professor Profile | IIIT Kalyani LMS",
@@ -24,23 +23,29 @@ import {
   BarChart3,
   GraduationCap,
 } from "lucide-react";
-import { Logger, safeFetch } from "@/lib/logger";
 
-const log = new Logger("professor-profile");
+interface ClassStat {
+  courseId: string;
+  courseTitle: string;
+  courseSlug: string;
+  accentColor: string;
+  enrolled: number;
+  avgProgress: number;
+  totalLessons: number;
+}
+
+interface ProfileData {
+  profile: {
+    full_name: string | null;
+    email: string;
+    department?: string;
+    institution?: string;
+  };
+}
 
 export default async function ProfessorProfilePage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user!.id)
-    .single();
-
-  const courseStats = await safeFetch(() => getClassStats(), log) ?? [];
+  const profileData = await serverFetch<ProfileData>("/profile");
+  const courseStats = await serverFetch<ClassStat[]>("/professor/stats") ?? [];
 
   const totalStudents = courseStats.reduce((sum, c) => sum + c.enrolled, 0);
   const totalLessons = courseStats.reduce((sum, c) => sum + c.totalLessons, 0);
@@ -52,10 +57,10 @@ export default async function ProfessorProfilePage() {
         )
       : 0;
 
-  const userName = profile?.full_name ?? "Professor";
-  const email = profile?.email ?? user?.email ?? "";
-  const department = profile?.department ?? "Not specified";
-  const institution = profile?.institution ?? "IIIT Kalyani";
+  const userName = profileData?.profile?.full_name ?? "Professor";
+  const email = profileData?.profile?.email ?? "";
+  const department = profileData?.profile?.department ?? "Not specified";
+  const institution = profileData?.profile?.institution ?? "IIIT Kalyani";
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 h-full overflow-y-auto">

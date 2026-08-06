@@ -24,7 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { updateProject } from "@/actions/content";
+import { professor } from "@/lib/api";
 
 interface EditProjectDialogProps {
   projectId: string;
@@ -100,7 +100,7 @@ export function EditProjectDialog({
 
     startTransition(async () => {
       try {
-        await updateProject(projectId, {
+        await professor.updateProject(projectId, {
           title: title.trim(),
           description: description.trim(),
           difficulty,

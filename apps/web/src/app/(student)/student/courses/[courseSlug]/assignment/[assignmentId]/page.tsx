@@ -1,6 +1,29 @@
-import { createClient } from "@/lib/supabase/server";
+import { serverFetch } from "@/lib/server-api";
 import { notFound } from "next/navigation";
 import { CodeSubmission } from "@/components/submissions/CodeSubmission";
+
+interface Assignment {
+  id: string;
+  course_id: string;
+  title: string;
+  description: string | null;
+  difficulty: string | null;
+  xp_reward: number | null;
+  language: string | null;
+  starter_code: string | null;
+  requirements: string[] | null;
+  due_date: string | null;
+}
+
+interface Submission {
+  id: string;
+  code: string;
+  status: string;
+  grade: number | null;
+  feedback: string | null;
+  submitted_at: string;
+  file_urls: string[] | null;
+}
 
 export default async function AssignmentPage({
   params,
@@ -8,32 +31,15 @@ export default async function AssignmentPage({
   params: Promise<{ courseSlug: string; assignmentId: string }>;
 }) {
   const { courseSlug, assignmentId } = await params;
-  const supabase = await createClient();
 
-  const { data: assignment } = await supabase
-    .from("assignments")
-    .select("*")
-    .eq("id", assignmentId)
-    .single();
+  const data = await serverFetch<{
+    assignment: Assignment;
+    submission: Submission | null;
+  }>(`/assignments/${assignmentId}`);
 
-  if (!assignment) notFound();
+  if (!data?.assignment) notFound();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  let existingSubmission = null;
-  if (user) {
-    const { data } = await supabase
-      .from("assignment_submissions")
-      .select("id, code, status, grade, feedback, submitted_at, file_urls")
-      .eq("assignment_id", assignmentId)
-      .eq("user_id", user.id)
-      .order("submitted_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    existingSubmission = data;
-  }
+  const { assignment, submission: existingSubmission } = data;
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 h-full overflow-y-auto">

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { assignInstructor, deleteCourse } from "@/actions/admin";
+import { admin } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -42,7 +42,7 @@ export function CourseActions({
     if (professorId === currentInstructorId) return;
     startTransition(async () => {
       try {
-        await assignInstructor(courseId, professorId);
+        await admin.assignInstructor(courseId, professorId);
         router.refresh();
       } catch (err: unknown) {
         alert(err instanceof Error ? err.message : "Failed to assign instructor");
@@ -53,7 +53,7 @@ export function CourseActions({
   const handleDelete = () => {
     startTransition(async () => {
       try {
-        await deleteCourse(courseId);
+        await admin.deleteCourse(courseId);
         setDeleteOpen(false);
         router.refresh();
       } catch (err: unknown) {

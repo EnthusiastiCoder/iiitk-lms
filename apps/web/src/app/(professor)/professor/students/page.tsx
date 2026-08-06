@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getStudentRoster } from "@/actions/professor";
+import { serverFetch } from "@/lib/server-api";
 
 export const metadata: Metadata = {
   title: "Students | IIIT Kalyani LMS",
@@ -15,10 +15,12 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Users, Search } from "lucide-react";
 import Link from "next/link";
 import { StudentSearch } from "@/components/professor/StudentSearch";
-import { Logger, safeFetch } from "@/lib/logger";
 import type { Profile, UserStats } from "@/types/database";
 
-const log = new Logger("professor-students");
+interface PaginatedStudents {
+  items: Array<Profile & { user_stats: UserStats[] | UserStats | null }>;
+  total: number;
+}
 
 export default async function StudentsPage({
   searchParams,
@@ -30,8 +32,13 @@ export default async function StudentsPage({
   const page = parseInt(params.page ?? "0", 10);
   const pageSize = 20;
 
-  const result = await safeFetch(() => getStudentRoster({ search, page, pageSize }), log);
-  const students = result?.students ?? [];
+  const query = new URLSearchParams();
+  if (search) query.set("search", search);
+  query.set("page", String(page));
+  query.set("limit", String(pageSize));
+
+  const result = await serverFetch<PaginatedStudents>(`/professor/students?${query.toString()}`);
+  const students = result?.items ?? [];
   const total = result?.total ?? 0;
 
   const totalPages = Math.ceil(total / pageSize);

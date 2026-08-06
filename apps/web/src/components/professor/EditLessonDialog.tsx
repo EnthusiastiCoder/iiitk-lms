@@ -25,7 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { updateLesson } from "@/actions/content";
+import { professor } from "@/lib/api";
 
 interface ContentSection {
   type: "text" | "code";
@@ -105,7 +105,7 @@ export function EditLessonDialog({
 
     startTransition(async () => {
       try {
-        await updateLesson(lessonId, {
+        await professor.updateLesson(lessonId, {
           title: title.trim(),
           description: description.trim(),
           type,

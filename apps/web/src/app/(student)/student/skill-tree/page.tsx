@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
-import { getUserCompletions } from "@/actions/courses";
-import { Logger, safeFetch } from "@/lib/logger";
-
-const log = new Logger("student-skill-tree");
+import { serverFetch } from "@/lib/server-api";
+import type { LessonCompletion } from "@lms/shared";
 
 export const metadata: Metadata = {
   title: "Skill Tree | IIIT Kalyani LMS",
@@ -13,25 +10,29 @@ import { Card, CardContent } from "@/components/ui/card";
 import { FadeIn } from "@/components/motion/fade-in";
 import { SkillTreeView } from "@/components/skill-tree/SkillTreeView";
 
+interface SkillTreeCourse {
+  id: string;
+  title: string;
+  accent_color: string;
+}
+
 interface Props {
   searchParams: Promise<{ course?: string }>;
 }
 
 export default async function SkillTreePage({ searchParams }: Props) {
   const { course: selectedCourseId } = await searchParams;
-  const supabase = await createClient();
 
-  // Find all courses that have skill tree nodes
-  const { data: treeCourseIds } = await supabase
-    .from("skill_tree_nodes")
-    .select("course_id")
-    .limit(100);
+  const courseParam = selectedCourseId ? `?course=${selectedCourseId}` : "";
+  const treeData = await serverFetch<{
+    courses: SkillTreeCourse[];
+    nodes: unknown[];
+    edges: unknown[];
+  }>(`/skill-tree${courseParam}`);
 
-  const uniqueCourseIds = [
-    ...new Set((treeCourseIds ?? []).map((r: { course_id: string }) => r.course_id)),
-  ];
+  const courseList = treeData?.courses ?? [];
 
-  if (uniqueCourseIds.length === 0) {
+  if (courseList.length === 0) {
     return (
       <div className="p-4 sm:p-6 lg:p-8 h-full overflow-y-auto">
         <div className="flex items-center gap-3 mb-6">
@@ -49,34 +50,19 @@ export default async function SkillTreePage({ searchParams }: Props) {
     );
   }
 
-  // Fetch course metadata for those courses
-  const { data: courses } = await supabase
-    .from("courses")
-    .select("id, title, accent_color")
-    .in("id", uniqueCourseIds)
-    .order("title");
-
-  const courseList = courses ?? [];
   const activeCourseId = selectedCourseId ?? courseList[0]?.id;
-  const activeCourse = courseList.find((c: { id: string; title: string; accent_color: string }) => c.id === activeCourseId);
+  const activeCourse = courseList.find((c: SkillTreeCourse) => c.id === activeCourseId);
   const courseColor = activeCourse?.accent_color ?? "#58CC02";
 
-  // Fetch nodes and edges for the active course
-  const [{ data: nodes }, { data: edges }] = await Promise.all([
-    supabase
-      .from("skill_tree_nodes")
-      .select("*")
-      .eq("course_id", activeCourseId)
-      .order("y")
-      .order("x"),
-    supabase
-      .from("skill_tree_edges")
-      .select("*")
-      .eq("course_id", activeCourseId),
-  ]);
+  const nodes = treeData?.nodes ?? [];
+  const edges = treeData?.edges ?? [];
 
   // Fetch user lesson completions to determine node status
-  const completions = await safeFetch(() => getUserCompletions(activeCourseId), log) ?? [];
+  const completions = activeCourseId
+    ? (await serverFetch<LessonCompletion[]>(
+        `/enrollments/completions?courseId=${activeCourseId}`
+      )) ?? []
+    : [];
   const completedLessonIds = new Set(
     completions.map((c: { lesson_id: string }) => c.lesson_id)
   );
@@ -102,7 +88,7 @@ export default async function SkillTreePage({ searchParams }: Props) {
       {/* Course selector tabs */}
       <FadeIn delay={0.1}>
         <div className="flex gap-2 mb-6 flex-wrap">
-          {courseList.map((course: { id: string; title: string; accent_color: string }) => (
+          {courseList.map((course: SkillTreeCourse) => (
             <a
               key={course.id}
               href={`/student/skill-tree?course=${course.id}`}

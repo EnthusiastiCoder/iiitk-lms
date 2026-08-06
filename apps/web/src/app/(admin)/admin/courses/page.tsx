@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getAllCourses, getProfessorList } from "@/actions/admin";
+import { serverFetch } from "@/lib/server-api";
 
 export const metadata: Metadata = {
   title: "Course Management | IIIT Kalyani LMS",
@@ -15,13 +15,28 @@ import { Badge } from "@/components/ui/badge";
 import { BookOpen, Users, Plus } from "lucide-react";
 import { CreateCourseDialog } from "@/components/admin/CreateCourseDialog";
 import { CourseActions } from "@/components/admin/CourseActions";
-import { Logger, safeFetch } from "@/lib/logger";
 
-const log = new Logger("admin-courses");
+interface AdminCourse {
+  id: string;
+  title: string;
+  description: string | null;
+  slug: string;
+  accent_color: string | null;
+  difficulty: string | null;
+  category: string | null;
+  instructor_id: string | null;
+  enrollment_count: number;
+}
+
+interface Professor {
+  id: string;
+  full_name: string | null;
+  email: string;
+}
 
 export default async function AdminCoursesPage() {
-  const courses = await safeFetch(() => getAllCourses(), log) ?? [];
-  const professors = await safeFetch(() => getProfessorList(), log) ?? [];
+  const courses = await serverFetch<AdminCourse[]>("/admin/courses") ?? [];
+  const professors = await serverFetch<Professor[]>("/admin/professors") ?? [];
 
   const totalEnrollments = courses.reduce(
     (sum, c) => sum + c.enrollment_count,

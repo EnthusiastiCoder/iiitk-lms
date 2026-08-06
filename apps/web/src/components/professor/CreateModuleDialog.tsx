@@ -16,7 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { createModule } from "@/actions/content";
+import { professor } from "@/lib/api";
 
 interface CreateModuleDialogProps {
   courseId: string;
@@ -49,7 +49,7 @@ export function CreateModuleDialog({ courseId }: CreateModuleDialogProps) {
 
     startTransition(async () => {
       try {
-        await createModule(courseId, { title: title.trim(), description: description.trim() });
+        await professor.createModule(courseId, { title: title.trim(), description: description.trim() });
         setOpen(false);
         resetForm();
         router.refresh();

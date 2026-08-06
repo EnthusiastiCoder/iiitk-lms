@@ -1,6 +1,5 @@
-import { getLessonContent, getFlashcardDeck } from "@/actions/lessons";
-import { getCourseWithModules, getUserCompletions } from "@/actions/courses";
-import type { Module, Lesson } from "@/types/database";
+import { serverFetch } from "@/lib/server-api";
+import type { CourseWithModules, Lesson, LessonCompletion } from "@lms/shared";
 import { notFound } from "next/navigation";
 import { LessonViewer } from "@/components/courses/LessonViewer";
 
@@ -12,18 +11,20 @@ export default async function LessonPage({
   const { courseSlug, lessonId } = await params;
 
   const [lesson, course, flashcardDeck] = await Promise.all([
-    getLessonContent(lessonId),
-    getCourseWithModules(courseSlug),
-    getFlashcardDeck(lessonId),
+    serverFetch<Lesson>(`/lessons/${lessonId}`),
+    serverFetch<CourseWithModules>(`/courses/${courseSlug}/full`),
+    serverFetch<unknown>(`/lessons/${lessonId}/flashcards`),
   ]);
 
   if (!lesson || !course) notFound();
 
-  const completions = await getUserCompletions(course.id);
-  const completedIds = completions.map((c: { lesson_id: string }) => c.lesson_id);
+  const completions = await serverFetch<LessonCompletion[]>(
+    `/enrollments/completions?courseId=${course.id}`
+  );
+  const completedIds = (completions ?? []).map((c: { lesson_id: string }) => c.lesson_id);
 
   // Build flat ordered lesson list for prev/next navigation
-  type ModuleWithLessons = Module & { lessons: Lesson[] };
+  type ModuleWithLessons = CourseWithModules["modules"][number];
   const allLessons = course.modules
     .sort((a: ModuleWithLessons, b: ModuleWithLessons) => a.order - b.order)
     .flatMap((m: ModuleWithLessons) =>

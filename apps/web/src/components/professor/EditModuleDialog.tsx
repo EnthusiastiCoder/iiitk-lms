@@ -17,7 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { updateModule } from "@/actions/content";
+import { professor } from "@/lib/api";
 
 interface EditModuleDialogProps {
   moduleId: string;
@@ -52,7 +52,7 @@ export function EditModuleDialog({
 
     startTransition(async () => {
       try {
-        await updateModule(moduleId, {
+        await professor.updateModule(moduleId, {
           title: title.trim(),
           description: description.trim(),
         });

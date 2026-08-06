@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getClassStats } from "@/actions/professor";
+import { serverFetch } from "@/lib/server-api";
 
 export const metadata: Metadata = {
   title: "Course Management | IIIT Kalyani LMS",
@@ -15,12 +15,19 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { BookOpen, Users, BarChart3, Settings } from "lucide-react";
 import Link from "next/link";
-import { Logger, safeFetch } from "@/lib/logger";
 
-const log = new Logger("professor-courses");
+interface ClassStat {
+  courseId: string;
+  courseTitle: string;
+  courseSlug: string;
+  accentColor: string;
+  enrolled: number;
+  avgProgress: number;
+  totalLessons: number;
+}
 
 export default async function CoursesManagementPage() {
-  const courseStats = await safeFetch(() => getClassStats(), log) ?? [];
+  const courseStats = await serverFetch<ClassStat[]>("/professor/stats") ?? [];
 
   const totalStudents = courseStats.reduce((sum, c) => sum + c.enrolled, 0);
   const totalLessons = courseStats.reduce((sum, c) => sum + c.totalLessons, 0);

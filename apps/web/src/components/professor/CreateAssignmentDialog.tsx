@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { createAssignment } from "@/actions/content";
+import { professor } from "@/lib/api";
 
 interface CreateAssignmentDialogProps {
   moduleId: string;
@@ -90,7 +90,7 @@ export function CreateAssignmentDialog({
 
     startTransition(async () => {
       try {
-        await createAssignment(moduleId, courseId, {
+        await professor.createAssignment(moduleId, courseId, {
           title: title.trim(),
           description: description.trim(),
           difficulty,

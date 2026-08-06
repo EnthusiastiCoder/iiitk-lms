@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getAllAchievements } from "@/actions/admin";
+import { serverFetch } from "@/lib/server-api";
 
 export const metadata: Metadata = {
   title: "Achievements | IIIT Kalyani LMS",
@@ -13,12 +13,19 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Trophy, Zap } from "lucide-react";
 import { CreateAchievementDialog } from "@/components/admin/CreateAchievementDialog";
-import { Logger, safeFetch } from "@/lib/logger";
 
-const log = new Logger("admin-achievements");
+interface AchievementItem {
+  id: string;
+  title: string;
+  description: string | null;
+  icon: string | null;
+  rarity: string;
+  category: string;
+  xp_reward: number | null;
+}
 
 export default async function AdminAchievementsPage() {
-  const achievements = await safeFetch(() => getAllAchievements(), log) ?? [];
+  const achievements = await serverFetch<AchievementItem[]>("/admin/achievements") ?? [];
 
   const rarityColor = (rarity: string) => {
     switch (rarity?.toLowerCase()) {

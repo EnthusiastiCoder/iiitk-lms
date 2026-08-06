@@ -1,9 +1,5 @@
 import type { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
-import { getLeaderboard } from "@/actions/gamification";
-import { Logger, safeFetch } from "@/lib/logger";
-
-const log = new Logger("student-leaderboard");
+import { serverFetch, getServerUserId } from "@/lib/server-api";
 
 export const metadata: Metadata = {
   title: "Leaderboard | IIIT Kalyani LMS",
@@ -18,16 +14,27 @@ import { tierConfig } from "@/lib/tiers";
 const podiumColors = ["#E8A800", "#8E8E93", "#B87333"] as const;
 const podiumLabels = ["1st", "2nd", "3rd"] as const;
 
+interface LeaderboardEntry {
+  userId: string;
+  name: string;
+  username?: string;
+  avatarUrl?: string;
+  xp: number;
+  streak: number;
+  tier: string;
+  level: number;
+  rank: number;
+}
+
 export default async function LeaderboardPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const [userId, leaderboard] = await Promise.all([
+    getServerUserId(),
+    serverFetch<LeaderboardEntry[]>("/gamification/leaderboard"),
+  ]);
 
-  const leaderboard = await safeFetch(() => getLeaderboard(), log) ?? [];
-
-  const top3 = leaderboard.slice(0, 3);
-  const rest = leaderboard.slice(3);
+  const safeLeaderboard = leaderboard ?? [];
+  const top3 = safeLeaderboard.slice(0, 3);
+  const rest = safeLeaderboard.slice(3);
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 h-full overflow-y-auto">
@@ -50,7 +57,7 @@ export default async function LeaderboardPage() {
         <FadeIn delay={0.1}>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
             {top3.map((entry, i) => {
-              const isCurrentUser = entry.userId === user?.id;
+              const isCurrentUser = entry.userId === userId;
               const tier = tierConfig[entry.tier] ?? tierConfig.bronze;
 
               return (
@@ -146,8 +153,8 @@ export default async function LeaderboardPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {(rest.length > 0 ? rest : leaderboard).map((entry) => {
-                    const isCurrentUser = entry.userId === user?.id;
+                  {(rest.length > 0 ? rest : safeLeaderboard).map((entry) => {
+                    const isCurrentUser = entry.userId === userId;
                     const tier = tierConfig[entry.tier] ?? tierConfig.bronze;
 
                     return (
@@ -232,7 +239,7 @@ export default async function LeaderboardPage() {
               </table>
             </div>
 
-            {leaderboard.length === 0 && (
+            {safeLeaderboard.length === 0 && (
               <div className="py-12 text-center text-muted-foreground">
                 <Trophy className="h-10 w-10 mx-auto mb-3 opacity-40" />
                 <p>No rankings yet. Start learning to climb the board!</p>

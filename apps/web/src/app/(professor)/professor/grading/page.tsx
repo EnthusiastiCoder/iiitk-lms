@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getPendingSubmissions, getRecentGraded } from "@/actions/professor";
+import { serverFetch } from "@/lib/server-api";
 
 export const metadata: Metadata = {
   title: "Grading | IIIT Kalyani LMS",
@@ -20,7 +20,6 @@ import {
   FolderKanban,
 } from "lucide-react";
 import { GradeDialog } from "@/components/professor/GradeDialog";
-import { Logger, safeFetch } from "@/lib/logger";
 
 interface GradingSubmission {
   id: string;
@@ -32,12 +31,15 @@ interface GradingSubmission {
   profiles: { full_name: string } | null;
 }
 
-const log = new Logger("professor-grading");
+interface SubmissionGroup {
+  assignments: GradingSubmission[];
+  projects: GradingSubmission[];
+}
 
 export default async function GradingPage() {
-  const defaultSubmissions = { assignments: [], projects: [] };
-  const pending = await safeFetch(() => getPendingSubmissions(), log) ?? defaultSubmissions;
-  const graded = await safeFetch(() => getRecentGraded(), log) ?? defaultSubmissions;
+  const defaultSubmissions: SubmissionGroup = { assignments: [], projects: [] };
+  const pending = await serverFetch<SubmissionGroup>("/professor/pending") ?? defaultSubmissions;
+  const graded = await serverFetch<SubmissionGroup>("/professor/graded") ?? defaultSubmissions;
 
   const totalPending =
     pending.assignments.length + pending.projects.length;

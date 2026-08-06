@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getAnalyticsData } from "@/actions/admin";
+import { serverFetch } from "@/lib/server-api";
 export const metadata: Metadata = {
   title: "Analytics | IIIT Kalyani LMS",
 };
@@ -12,9 +12,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { BarChart3, Users, BookOpen, Trophy, Zap } from "lucide-react";
-import { Logger, safeFetch } from "@/lib/logger";
-
-const log = new Logger("admin-analytics");
 
 interface JoinedProfile {
   full_name: string;
@@ -37,23 +34,24 @@ interface RecentSubmission {
   profiles: JoinedProfile | JoinedProfile[] | null;
 }
 
+interface AnalyticsData {
+  userGrowth: { month: string; count: number }[];
+  courseEnrollments: { title: string; count: number }[];
+  maxEnrollment: number;
+  topStudents: TopStudent[];
+  recentSubmissions: RecentSubmission[];
+}
+
 export default async function AdminAnalyticsPage() {
-  const defaultData = {
-    userGrowth: [] as { month: string; count: number }[],
-    courseEnrollments: [] as { title: string; count: number }[],
+  const defaultData: AnalyticsData = {
+    userGrowth: [],
+    courseEnrollments: [],
     maxEnrollment: 1,
-    topStudents: [] as TopStudent[],
-    recentSubmissions: [] as RecentSubmission[],
+    topStudents: [],
+    recentSubmissions: [],
   };
 
-  const result = await safeFetch(() => getAnalyticsData(), log);
-  const data = result
-    ? {
-        ...result,
-        topStudents: result.topStudents as TopStudent[],
-        recentSubmissions: result.recentSubmissions as RecentSubmission[],
-      }
-    : defaultData;
+  const data = await serverFetch<AnalyticsData>("/admin/analytics") ?? defaultData;
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 h-full overflow-y-auto">

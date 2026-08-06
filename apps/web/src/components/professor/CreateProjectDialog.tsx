@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { createProject } from "@/actions/content";
+import { professor } from "@/lib/api";
 
 interface CreateProjectDialogProps {
   moduleId: string;
@@ -87,7 +87,7 @@ export function CreateProjectDialog({
 
     startTransition(async () => {
       try {
-        await createProject(moduleId, courseId, {
+        await professor.createProject(moduleId, courseId, {
           title: title.trim(),
           description: description.trim(),
           difficulty,

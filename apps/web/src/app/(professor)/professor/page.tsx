@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
-import { getClassStats } from "@/actions/professor";
+import { serverFetch } from "@/lib/server-api";
 
 export const metadata: Metadata = {
   title: "Professor Dashboard | IIIT Kalyani LMS",
@@ -21,23 +20,20 @@ import {
   TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
-import { Logger, safeFetch } from "@/lib/logger";
 
-const log = new Logger("professor-dashboard");
+interface ClassStat {
+  courseId: string;
+  courseTitle: string;
+  courseSlug: string;
+  accentColor: string;
+  enrolled: number;
+  avgProgress: number;
+  totalLessons: number;
+}
 
 export default async function ProfessorDashboard() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user!.id)
-    .single();
-
-  const courseStats = await safeFetch(() => getClassStats(), log) ?? [];
+  const profileData = await serverFetch<{ profile: { full_name: string | null } }>("/profile");
+  const courseStats = await serverFetch<ClassStat[]>("/professor/stats") ?? [];
 
   const totalStudents = courseStats.reduce((sum, c) => sum + c.enrolled, 0);
   const totalCourses = courseStats.length;
@@ -48,7 +44,7 @@ export default async function ProfessorDashboard() {
         )
       : 0;
 
-  const userName = profile?.full_name ?? "Professor";
+  const userName = profileData?.profile?.full_name ?? "Professor";
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 h-full overflow-y-auto">
