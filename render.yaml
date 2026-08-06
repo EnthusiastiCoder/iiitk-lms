@@ -3,6 +3,7 @@ services:
     name: iiitk-lms-api
     runtime: node
     region: oregon
+    branch: main
     plan: free
     buildCommand: npm ci && npm run build -w @lms/api
     startCommand: npm run start -w @lms/api
