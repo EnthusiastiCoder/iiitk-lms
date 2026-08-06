@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: iiitk-lms-api
+    runtime: node
+    region: oregon
+    plan: free
+    buildCommand: npm ci && npm run build -w @lms/api
+    startCommand: npm run start -w @lms/api
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "4000"
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_REFRESH_SECRET
+        sync: false
+      - key: JWT_EXPIRY
+        value: "1h"
+      - key: JWT_REFRESH_EXPIRY
+        value: "7d"
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: AXIOM_TOKEN
+        sync: false
+      - key: AXIOM_DATASET
+        value: backend
+      - key: FRONTEND_URL
+        sync: false

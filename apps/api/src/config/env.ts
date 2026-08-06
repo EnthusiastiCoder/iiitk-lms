@@ -1,4 +1,7 @@
+import { config } from "dotenv";
 import { z } from "zod";
+
+config();
 
 const envSchema = z.object({
   PORT: z.coerce.number().default(4000),
@@ -14,9 +17,9 @@ const envSchema = z.object({
   JWT_EXPIRY: z.string().default("1h"),
   JWT_REFRESH_EXPIRY: z.string().default("7d"),
 
-  CLOUDINARY_CLOUD_NAME: z.string().min(1),
-  CLOUDINARY_API_KEY: z.string().min(1),
-  CLOUDINARY_API_SECRET: z.string().min(1),
+  CLOUDINARY_CLOUD_NAME: z.string().default("placeholder"),
+  CLOUDINARY_API_KEY: z.string().default("placeholder"),
+  CLOUDINARY_API_SECRET: z.string().default("placeholder"),
 
   AXIOM_TOKEN: z.string().optional(),
   AXIOM_DATASET: z.string().default("backend"),

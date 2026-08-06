@@ -21,9 +21,17 @@ export default defineConfig({
     { name: 'journey-flows', testMatch: ['flows/student-journey.spec.ts', 'flows/professor-management.spec.ts', 'flows/admin-operations.spec.ts', 'flows/cross-role.spec.ts'], dependencies: ['setup'] },
     { name: 'interactive-flows', testMatch: 'flows/*-flow.spec.ts', dependencies: ['setup'] },
   ],
-  webServer: {
-    command: 'npm run dev',
-    port: 3000,
-    reuseExistingServer: true,
-  },
+  webServer: [
+    {
+      command: 'npm run dev -w @lms/api',
+      port: 4000,
+      reuseExistingServer: true,
+      cwd: '../..',
+    },
+    {
+      command: 'npm run dev',
+      port: 3000,
+      reuseExistingServer: true,
+    },
+  ],
 });
