@@ -6,6 +6,7 @@ const logger = new Logger("streak.service");
 /**
  * Recalculate current and longest streak from streak log and update user stats.
  * @param userId - UUID of the user whose streak stats should be refreshed
+ * @returns Resolves when streak stats have been updated
  */
 export async function updateStreakStats(userId: string): Promise<void> {
   const { data, error } = await supabase

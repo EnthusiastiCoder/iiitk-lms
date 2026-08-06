@@ -33,7 +33,16 @@ function signTokens(payload: AuthPayload): AuthTokens {
   return { accessToken, refreshToken, expiresAt: decoded.exp };
 }
 
-/** Register a new user via Supabase Admin API. */
+/**
+ * Register a new user via Supabase Admin API.
+ * @param email - User's email address
+ * @param password - User's password (min 8 chars)
+ * @param fullName - User's display name
+ * @param role - Account role to assign
+ * @returns The created profile, auth tokens, and confirmation status
+ * @throws {ConflictError} If the email is already registered
+ * @throws {BadRequestError} If Supabase rejects the input
+ */
 export async function register(
   email: string,
   password: string,
@@ -100,7 +109,13 @@ export async function register(
   };
 }
 
-/** Login with email and password. */
+/**
+ * Login with email and password.
+ * @param email - User's email address
+ * @param password - User's password
+ * @returns The user profile, stats, and auth tokens
+ * @throws {UnauthorizedError} If credentials are invalid or profile not found
+ */
 export async function login(
   email: string,
   password: string
@@ -139,7 +154,12 @@ export async function login(
   return { user: profile, stats, tokens };
 }
 
-/** Refresh an access token using a refresh token. */
+/**
+ * Refresh an access token using a refresh token.
+ * @param refreshToken - The refresh JWT to verify and rotate
+ * @returns A new pair of access and refresh tokens
+ * @throws {UnauthorizedError} If the refresh token is invalid or expired
+ */
 export function refresh(refreshToken: string): AuthTokens {
   try {
     const payload = jwt.verify(

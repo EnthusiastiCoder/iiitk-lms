@@ -3,7 +3,11 @@ import { ForbiddenError, UnauthorizedError } from "../utils/errors.js";
 
 type Role = "student" | "professor" | "admin";
 
-/** Factory: returns middleware that requires one of the given roles. */
+/**
+ * Factory: returns middleware that requires one of the given roles.
+ * @param roles - Roles that are allowed to access the route
+ * @returns Express middleware that enforces the role check
+ */
 export function requireRole(...roles: Role[]) {
   return (req: Request, _res: Response, next: NextFunction): void => {
     if (!req.user) {
@@ -18,6 +22,9 @@ export function requireRole(...roles: Role[]) {
   };
 }
 
+/** Middleware allowing student, professor, and admin roles. */
 export const requireStudent = requireRole("student", "professor", "admin");
+/** Middleware allowing professor and admin roles. */
 export const requireProfessor = requireRole("professor", "admin");
+/** Middleware allowing only the admin role. */
 export const requireAdmin = requireRole("admin");

@@ -9,6 +9,7 @@ const logger = new Logger("enrollment.service");
  * Fetch all enrollments for a given user.
  * @param userId - The ID of the user
  * @returns All enrollment records for the user
+ * @throws Error if the database query fails
  */
 export async function getUserEnrollments(
   userId: string
@@ -33,6 +34,7 @@ export async function getUserEnrollments(
  * @param userId - The ID of the user
  * @param courseId - Optional course ID to filter completions
  * @returns Matching lesson completion records
+ * @throws Error if the database query fails
  */
 export async function getUserCompletions(
   userId: string,

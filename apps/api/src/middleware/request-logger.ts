@@ -3,7 +3,13 @@ import { Logger } from "../utils/logger.js";
 
 const logger = new Logger("http");
 
-/** Log method, path, status, and duration for every request. */
+/**
+ * Log method, path, status, and duration for every request.
+ * @param req - Express request object
+ * @param res - Express response object
+ * @param next - Express next function
+ * @returns void
+ */
 export function requestLogger(
   req: Request,
   res: Response,

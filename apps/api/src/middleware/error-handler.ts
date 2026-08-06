@@ -4,7 +4,14 @@ import { Logger } from "../utils/logger.js";
 
 const logger = new Logger("error-handler");
 
-/** Global error handler — must be registered last. */
+/**
+ * Global error handler -- must be registered last.
+ * @param err - The error thrown by a route or middleware
+ * @param req - Express request object
+ * @param res - Express response object
+ * @param _next - Express next function (unused)
+ * @returns void
+ */
 export function errorHandler(
   err: Error,
   req: Request,
