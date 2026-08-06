@@ -5,8 +5,8 @@ services:
     region: oregon
     branch: main
     plan: free
-    buildCommand: npm ci && npm run build -w @lms/api
-    startCommand: npm run start -w @lms/api
+    buildCommand: npm install && cd apps/api && npx tsc
+    startCommand: node apps/api/dist/apps/api/src/index.js
     envVars:
       - key: NODE_ENV
         value: production

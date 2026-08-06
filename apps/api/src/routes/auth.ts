@@ -11,8 +11,15 @@ const loginSchema = z.object({
   password: z.string().min(6),
 });
 
+const ALLOWED_DOMAIN = "iiitkalyani.ac.in";
+
 const registerSchema = z.object({
-  email: z.string().email(),
+  email: z
+    .string()
+    .email()
+    .refine((e) => e.endsWith(`@${ALLOWED_DOMAIN}`), {
+      message: `Only @${ALLOWED_DOMAIN} emails are allowed`,
+    }),
   password: z.string().min(8),
   full_name: z.string().min(2),
   role: z.enum(["student", "professor"]),
