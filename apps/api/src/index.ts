@@ -20,6 +20,8 @@ import { submissionRouter } from "./routes/submissions.js";
 import { gamificationRouter } from "./routes/gamification.js";
 import { profileRouter } from "./routes/profile.js";
 import { uploadRouter } from "./routes/upload.js";
+import { practiceRouter } from "./routes/practice.js";
+import { skillTreeRouter } from "./routes/skill-tree.js";
 import { adminUserRouter } from "./routes/admin/users.js";
 import { adminCourseRouter } from "./routes/admin/courses.js";
 import { adminAchievementRouter } from "./routes/admin/achievements.js";
@@ -59,6 +61,8 @@ app.use("/api/submissions", authenticate, submissionRouter);
 app.use("/api/gamification", authenticate, gamificationRouter);
 app.use("/api/profile", authenticate, profileRouter);
 app.use("/api/upload", authenticate, uploadRouter);
+app.use("/api/practice", authenticate, practiceRouter);
+app.use("/api/skill-tree", authenticate, skillTreeRouter);
 
 app.use("/api/admin", authenticate, requireAdmin, adminUserRouter);
 app.use("/api/admin", authenticate, requireAdmin, adminCourseRouter);

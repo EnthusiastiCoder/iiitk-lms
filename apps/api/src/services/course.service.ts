@@ -16,6 +16,7 @@ const logger = new Logger("course.service");
 /**
  * Fetch all courses from the database.
  * @returns All courses ordered by creation date
+ * @throws Error if the database query fails
  */
 export async function getAllCourses(): Promise<Course[]> {
   const { data, error } = await supabase

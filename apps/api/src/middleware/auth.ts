@@ -17,7 +17,14 @@ declare global {
   }
 }
 
-/** Extract and verify JWT from Authorization header. */
+/**
+ * Extract and verify JWT from Authorization header.
+ * @param req - Express request object
+ * @param _res - Express response object (unused)
+ * @param next - Express next function
+ * @returns void
+ * @throws {UnauthorizedError} If the token is missing, invalid, or expired
+ */
 export function authenticate(
   req: Request,
   _res: Response,

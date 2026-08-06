@@ -52,16 +52,28 @@ function startFlushTimer(): void {
 
 startFlushTimer();
 
-/** Flush remaining logs on process exit. */
+/**
+ * Flush remaining logs on process exit.
+ * @returns Resolves when the final Axiom flush completes
+ */
 export function shutdownLogger(): Promise<void> {
   if (flushTimer) clearInterval(flushTimer);
   return flushToAxiom();
 }
 
+/** Structured logger that batches entries and flushes to Axiom. */
 export class Logger {
+  /**
+   * @param module - Module name used to tag all log entries from this instance
+   */
   constructor(private module: string) {}
 
-  /** Log an informational event. */
+  /**
+   * Log an informational event.
+   * @param event - Short event identifier
+   * @param data - Optional structured data to attach
+   * @returns void
+   */
   info(event: string, data?: Record<string, unknown>): void {
     enqueue({
       level: "info",
@@ -72,7 +84,12 @@ export class Logger {
     });
   }
 
-  /** Log a warning. */
+  /**
+   * Log a warning.
+   * @param event - Short event identifier
+   * @param data - Optional structured data to attach
+   * @returns void
+   */
   warn(event: string, data?: Record<string, unknown>): void {
     enqueue({
       level: "warn",
@@ -83,7 +100,13 @@ export class Logger {
     });
   }
 
-  /** Log an error with automatic normalization. */
+  /**
+   * Log an error with automatic normalization.
+   * @param event - Short event identifier
+   * @param err - The error value to normalize and attach
+   * @param data - Optional structured data to attach
+   * @returns void
+   */
   error(event: string, err: unknown, data?: Record<string, unknown>): void {
     const normalized =
       err instanceof Error

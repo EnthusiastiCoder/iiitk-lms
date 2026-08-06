@@ -250,7 +250,7 @@ export async function gradeSubmission(
   if (sourceData?.xp_reward) {
     const xpAmount = Math.round(sourceData.xp_reward * (grade / 100));
 
-    await Promise.all([
+    const [, { data: currentStats }] = await Promise.all([
       supabase.from("xp_transactions").insert({
         user_id: submission.user_id,
         amount: xpAmount,
@@ -258,11 +258,16 @@ export async function gradeSubmission(
         source_id: sourceId,
         description: `Graded ${sourceType}: ${grade}/100`,
       }),
-      supabase.rpc("increment_xp", {
-        p_user_id: submission.user_id,
-        p_amount: xpAmount,
-      }),
+      supabase
+        .from("user_stats")
+        .select("total_xp")
+        .eq("user_id", submission.user_id)
+        .single(),
     ]);
+    await supabase
+      .from("user_stats")
+      .update({ total_xp: (currentStats?.total_xp ?? 0) + xpAmount })
+      .eq("user_id", submission.user_id);
 
     logger.info("xp_awarded", {
       userId: submission.user_id,
