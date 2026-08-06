@@ -19,7 +19,7 @@ import type {
   UserStats,
 } from "@lms/shared";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:10000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "https://iiitk-lms.onrender.com";
 
 function getTokens(): AuthTokens | null {
   if (typeof window === "undefined") return null;

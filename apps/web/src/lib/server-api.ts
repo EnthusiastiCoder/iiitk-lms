@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:10000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "https://iiitk-lms.onrender.com";
 
 /** Decode the JWT to extract the user ID without an API call. */
 export async function getServerUserId(): Promise<string | null> {
