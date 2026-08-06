@@ -5,7 +5,7 @@ import { UnauthorizedError } from "../utils/errors.js";
 
 export interface AuthPayload {
   userId: string;
-  role: "student" | "professor" | "admin";
+  role: "student" | "professor" | "admin" | "tester";
   email: string;
 }
 

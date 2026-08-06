@@ -27,6 +27,8 @@ const envSchema = z.object({
   SENTRY_DSN: z.string().optional(),
 
   FRONTEND_URL: z.string().url().default("http://localhost:3000"),
+
+  MCP_API_KEY: z.string().default("dev-mcp-key-change-in-production"),
 });
 
 /** Validated environment variables. Throws on startup if invalid. */
