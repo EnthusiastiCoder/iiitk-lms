@@ -4,7 +4,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Check, Lock } from "lucide-react";
 
-interface SkillNode {
+export interface SkillNode {
   id: string;
   course_id: string;
   label: string;
@@ -16,7 +16,7 @@ interface SkillNode {
   icon: string | null;
 }
 
-interface SkillEdge {
+export interface SkillEdge {
   id: string;
   course_id: string;
   from_node_id: string;

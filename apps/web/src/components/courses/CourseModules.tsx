@@ -35,17 +35,17 @@ interface Lesson {
 
 interface Quiz {
   id: string;
-  module_id: string;
+  module_id: string | null;
   title: string;
   description: string;
-  time_limit: number;
+  time_limit_minutes: number;
   question_count: number;
   xp_reward: number;
 }
 
 interface Assignment {
   id: string;
-  module_id: string;
+  module_id: string | null;
   title: string;
   description: string;
   difficulty: string;
@@ -56,7 +56,7 @@ interface Assignment {
 
 interface Project {
   id: string;
-  module_id: string;
+  module_id: string | null;
   title: string;
   description: string;
   difficulty: string;
@@ -204,7 +204,7 @@ export function CourseModules({
                             <span className="flex-1 truncate">{quiz.title}</span>
                             <span className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
                               <Timer className="h-3 w-3" />
-                              {quiz.time_limit}m
+                              {quiz.time_limit_minutes}m
                             </span>
                             <Badge variant="secondary" className="text-xs shrink-0">
                               {quiz.question_count} Q

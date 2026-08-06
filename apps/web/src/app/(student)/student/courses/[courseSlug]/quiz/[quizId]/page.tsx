@@ -25,7 +25,7 @@ export default async function QuizPage({
         courseSlug={courseSlug}
         title={quiz.title}
         description={quiz.description ?? ""}
-        timeLimit={quiz.time_limit ?? 30}
+        timeLimit={quiz.time_limit_minutes ?? 30}
         questions={questions ?? []}
       />
     </div>

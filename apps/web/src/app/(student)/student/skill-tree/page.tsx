@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 import { Route } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { FadeIn } from "@/components/motion/fade-in";
-import { SkillTreeView } from "@/components/skill-tree/SkillTreeView";
+import { SkillTreeView, type SkillNode, type SkillEdge } from "@/components/skill-tree/SkillTreeView";
 
 interface SkillTreeCourse {
   id: string;
@@ -26,8 +26,8 @@ export default async function SkillTreePage({ searchParams }: Props) {
   const courseParam = selectedCourseId ? `?course=${selectedCourseId}` : "";
   const treeData = await serverFetch<{
     courses: SkillTreeCourse[];
-    nodes: unknown[];
-    edges: unknown[];
+    nodes: SkillNode[];
+    edges: SkillEdge[];
   }>(`/skill-tree${courseParam}`);
 
   const courseList = treeData?.courses ?? [];

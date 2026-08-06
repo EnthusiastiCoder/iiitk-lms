@@ -2,7 +2,6 @@
 
 import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
-import { logClientError } from "@/lib/axiom-web-vitals";
 
 export default function GlobalError({
   error,
@@ -13,7 +12,6 @@ export default function GlobalError({
 }) {
   useEffect(() => {
     Sentry.captureException(error);
-    logClientError(error, { digest: error.digest, source: "global-error" });
   }, [error]);
 
   return (
