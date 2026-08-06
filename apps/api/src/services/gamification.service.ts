@@ -282,10 +282,15 @@ async function awardAchievementXp(
   const totalXp = unlocked.reduce((sum, a) => sum + a.xp_reward, 0);
 
   if (totalXp > 0) {
-    await supabase.rpc("increment_xp", {
-      p_user_id: userId,
-      p_amount: totalXp,
-    });
+    const { data: current } = await supabase
+      .from("user_stats")
+      .select("total_xp")
+      .eq("user_id", userId)
+      .single();
+    await supabase
+      .from("user_stats")
+      .update({ total_xp: (current?.total_xp ?? 0) + totalXp })
+      .eq("user_id", userId);
   }
 
   logger.info("achievements_unlocked", {

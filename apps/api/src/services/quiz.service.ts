@@ -119,11 +119,15 @@ async function updateUserStats(
   userId: string,
   xpEarned: number
 ): Promise<void> {
-  const { error } = await supabase.rpc("increment_user_stats", {
-    p_user_id: userId,
-    p_xp: xpEarned,
-    p_lessons: 0,
-  });
+  const { data: current } = await supabase
+    .from("user_stats")
+    .select("total_xp")
+    .eq("user_id", userId)
+    .single();
+  const { error } = await supabase
+    .from("user_stats")
+    .update({ total_xp: (current?.total_xp ?? 0) + xpEarned })
+    .eq("user_id", userId);
 
   if (error) {
     logger.error("update_user_stats_failed", error, { userId });
