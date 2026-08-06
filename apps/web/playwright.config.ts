@@ -24,7 +24,7 @@ export default defineConfig({
   webServer: [
     {
       command: 'npm run dev -w @lms/api',
-      port: 4000,
+      port: 10000,
       reuseExistingServer: true,
       cwd: '../..',
     },

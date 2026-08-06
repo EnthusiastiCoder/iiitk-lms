@@ -19,7 +19,7 @@ import type {
   UserStats,
 } from "@lms/shared";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:10000";
 
 function getTokens(): AuthTokens | null {
   if (typeof window === "undefined") return null;
