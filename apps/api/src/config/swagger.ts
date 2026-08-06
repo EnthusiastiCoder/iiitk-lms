@@ -1,4 +1,15 @@
 import swaggerJsdoc from "swagger-jsdoc";
+import { env } from "./env.js";
+
+/**
+ * In dev (tsx watch), source TS files are available at ./src/.
+ * In production (compiled JS), tsc outputs to ./dist/apps/api/src/
+ * and preserves JSDoc comments, so swagger-jsdoc can read from there.
+ */
+const routeGlob =
+  env.NODE_ENV === "production"
+    ? "./dist/apps/api/src/routes/**/*.js"
+    : "./src/routes/**/*.ts";
 
 const options: swaggerJsdoc.Options = {
   definition: {
@@ -25,7 +36,7 @@ const options: swaggerJsdoc.Options = {
     },
     security: [{ bearerAuth: [] }],
   },
-  apis: ["./src/routes/**/*.ts"],
+  apis: [routeGlob],
 };
 
 export const swaggerSpec = swaggerJsdoc(options);
