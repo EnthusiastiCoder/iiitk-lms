@@ -32,7 +32,7 @@ export function CourseActions({
   courseId: string;
   courseTitle: string;
   currentInstructorId: string | null;
-  professors: { id: string; full_name: string; email: string }[];
+  professors: { id: string; full_name: string | null; email: string }[];
 }) {
   const [isPending, startTransition] = useTransition();
   const [deleteOpen, setDeleteOpen] = useState(false);

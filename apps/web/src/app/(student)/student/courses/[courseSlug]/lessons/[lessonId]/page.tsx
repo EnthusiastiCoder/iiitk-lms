@@ -13,7 +13,7 @@ export default async function LessonPage({
   const [lesson, course, flashcardDeck] = await Promise.all([
     serverFetch<Lesson>(`/lessons/${lessonId}`),
     serverFetch<CourseWithModules>(`/courses/${courseSlug}/full`),
-    serverFetch<unknown>(`/lessons/${lessonId}/flashcards`),
+    serverFetch<{ id: string; title: string; cards: { front: string; back: string }[] }>(`/lessons/${lessonId}/flashcards`),
   ]);
 
   if (!lesson || !course) notFound();

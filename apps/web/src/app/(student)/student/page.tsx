@@ -62,16 +62,12 @@ export default async function StudentDashboard() {
   const currentStreak = stats?.current_streak ?? 0;
   const tier = tierConfig[stats?.tier ?? "bronze"] ?? tierConfig.bronze;
 
-  interface CourseRow { id: string; slug: string; title: string; description: string; [key: string]: unknown }
-  interface EnrollmentRow { course_id: string; enrolled_at: string; [key: string]: unknown }
-  interface CompletionRow { course_id: string; lesson_id: string; [key: string]: unknown }
+  const courseMap = new Map(safeCourses.map((c: Course) => [c.id, c]));
 
-  const courseMap = new Map(safeCourses.map((c: CourseRow) => [c.id, c]));
-
-  const enrolledCourses = safeEnrollments.map((e: EnrollmentRow) => {
+  const enrolledCourses = safeEnrollments.map((e: Enrollment) => {
     const course = courseMap.get(e.course_id);
     const courseCompletions = safeCompletions.filter(
-      (c: CompletionRow) => c.course_id === e.course_id
+      (c: LessonCompletion) => c.course_id === e.course_id
     );
     return {
       id: e.course_id,
