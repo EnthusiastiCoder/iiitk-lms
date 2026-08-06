@@ -11,8 +11,18 @@ export async function middleware(request: NextRequest) {
   }
 
   if (token && pathname.startsWith("/auth")) {
+    // Decode JWT to check role for redirect target
+    let redirectPath = "/student";
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      if (payload.role === "tester") {
+        redirectPath = "/tester/bugs";
+      }
+    } catch {
+      // fall through to default redirect
+    }
     const url = request.nextUrl.clone();
-    url.pathname = "/student";
+    url.pathname = redirectPath;
     return NextResponse.redirect(url);
   }
 
