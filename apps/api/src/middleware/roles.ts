@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { ForbiddenError, UnauthorizedError } from "../utils/errors.js";
 
-type Role = "student" | "professor" | "admin";
+type Role = "student" | "professor" | "admin" | "tester";
 
 /**
  * Factory: returns middleware that requires one of the given roles.
@@ -28,3 +28,5 @@ export const requireStudent = requireRole("student", "professor", "admin");
 export const requireProfessor = requireRole("professor", "admin");
 /** Middleware allowing only the admin role. */
 export const requireAdmin = requireRole("admin");
+/** Middleware allowing tester and admin roles. */
+export const requireTester = requireRole("tester", "admin");

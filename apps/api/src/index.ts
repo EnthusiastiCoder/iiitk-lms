@@ -31,8 +31,10 @@ import { professorDashboardRouter } from "./routes/professor/dashboard.js";
 import { professorStudentRouter } from "./routes/professor/students.js";
 import { professorGradingRouter } from "./routes/professor/grading.js";
 import { professorContentRouter } from "./routes/professor/content.js";
+import { bugRouter } from "./routes/bugs.js";
+import { mcpBugRouter } from "./routes/mcp-bugs.js";
 import { authenticate } from "./middleware/auth.js";
-import { requireProfessor, requireAdmin } from "./middleware/roles.js";
+import { requireProfessor, requireAdmin, requireTester } from "./middleware/roles.js";
 
 const app = express();
 const logger = new Logger("server");
@@ -63,6 +65,9 @@ app.use("/api/profile", authenticate, profileRouter);
 app.use("/api/upload", authenticate, uploadRouter);
 app.use("/api/practice", authenticate, practiceRouter);
 app.use("/api/skill-tree", authenticate, skillTreeRouter);
+
+app.use("/api/bugs", authenticate, requireTester, bugRouter);
+app.use("/api/mcp/bugs", mcpBugRouter);
 
 app.use("/api/admin", authenticate, requireAdmin, adminUserRouter);
 app.use("/api/admin", authenticate, requireAdmin, adminCourseRouter);

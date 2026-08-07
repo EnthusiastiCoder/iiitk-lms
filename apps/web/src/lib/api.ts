@@ -411,6 +411,44 @@ export const professor = {
     }),
 };
 
+export const bugs = {
+  list: (params?: {
+    status?: string;
+    severity?: string;
+  }): Promise<unknown[]> => {
+    const q = new URLSearchParams();
+    if (params?.status) q.set("status", params.status);
+    if (params?.severity) q.set("severity", params.severity);
+    const qs = q.toString();
+    return apiFetch(`/bugs${qs ? `?${qs}` : ""}`);
+  },
+  get: (id: string): Promise<unknown> => apiFetch(`/bugs/${id}`),
+  create: (data: {
+    title: string;
+    description: string;
+    severity: string;
+    screenshotUrls?: string[];
+  }): Promise<unknown> =>
+    apiFetch("/bugs", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  updateStatus: (id: string, status: string): Promise<unknown> =>
+    apiFetch(`/bugs/${id}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ status }),
+    }),
+  comment: (id: string, message: string): Promise<unknown> =>
+    apiFetch(`/bugs/${id}/comments`, {
+      method: "POST",
+      body: JSON.stringify({ message }),
+    }),
+  close: (id: string): Promise<unknown> =>
+    apiFetch(`/bugs/${id}/close`, { method: "POST" }),
+  reopen: (id: string): Promise<unknown> =>
+    apiFetch(`/bugs/${id}/reopen`, { method: "POST" }),
+};
+
 export const admin = {
   stats: (): Promise<unknown> => apiFetch("/admin/stats"),
   users: (params?: {
