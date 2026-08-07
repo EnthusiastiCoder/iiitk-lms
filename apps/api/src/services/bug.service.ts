@@ -34,7 +34,7 @@ interface AddCommentData {
  * @param filters - Optional status and severity filters
  * @returns Array of bug records with reporter name
  */
-export async function listBugs(filters?: BugFilters) {
+export async function listBugs(filters?: BugFilters): Promise<Record<string, unknown>[]> {
   let query = supabase
     .from("bugs")
     .select("*, profiles!bugs_reporter_id_fkey(full_name)")
@@ -64,7 +64,7 @@ export async function listBugs(filters?: BugFilters) {
  * @returns The bug record and its comments ordered by created_at asc
  * @throws {NotFoundError} When the bug does not exist
  */
-export async function getBugById(bugId: string) {
+export async function getBugById(bugId: string): Promise<Record<string, unknown>> {
   const [bugResult, commentsResult] = await Promise.all([
     supabase
       .from("bugs")
@@ -96,7 +96,7 @@ export async function getBugById(bugId: string) {
  * @returns The created bug record
  * @throws {BadRequestError} When the insert fails
  */
-export async function createBug(data: CreateBugData) {
+export async function createBug(data: CreateBugData): Promise<Record<string, unknown>> {
   const { data: bug, error } = await supabase
     .from("bugs")
     .insert({
@@ -126,7 +126,7 @@ export async function createBug(data: CreateBugData) {
  * @returns The updated bug record
  * @throws {NotFoundError} When the bug does not exist
  */
-export async function updateBugStatus(bugId: string, status: string) {
+export async function updateBugStatus(bugId: string, status: string): Promise<Record<string, unknown>> {
   const { data, error } = await supabase
     .from("bugs")
     .update({ status, updated_at: new Date().toISOString() })
@@ -151,7 +151,7 @@ export async function updateBugStatus(bugId: string, status: string) {
  * @returns The created comment record
  * @throws {BadRequestError} When the insert fails
  */
-export async function addComment(data: AddCommentData) {
+export async function addComment(data: AddCommentData): Promise<Record<string, unknown>> {
   const { data: comment, error } = await supabase
     .from("bug_comments")
     .insert({
@@ -180,7 +180,7 @@ export async function addComment(data: AddCommentData) {
  * @returns The updated bug record
  * @throws {NotFoundError} When the bug does not exist
  */
-export async function closeBug(bugId: string, userId: string) {
+export async function closeBug(bugId: string, userId: string): Promise<Record<string, unknown>> {
   const bug = await updateBugStatus(bugId, "closed");
 
   await addComment({
@@ -202,7 +202,7 @@ export async function closeBug(bugId: string, userId: string) {
  * @returns The updated bug record
  * @throws {NotFoundError} When the bug does not exist
  */
-export async function reopenBug(bugId: string, userId: string) {
+export async function reopenBug(bugId: string, userId: string): Promise<Record<string, unknown>> {
   const bug = await updateBugStatus(bugId, "open");
 
   await addComment({
