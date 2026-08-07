@@ -10,6 +10,10 @@ const nextConfig: NextConfig = {
         hostname: "*.supabase.co",
         pathname: "/storage/v1/object/public/**",
       },
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+      },
     ],
   },
   async headers() {
@@ -31,9 +35,9 @@ const nextConfig: NextConfig = {
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: blob: https://*.supabase.co",
+              "img-src 'self' data: blob: https://*.supabase.co https://res.cloudinary.com",
               "font-src 'self'",
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.axiom.co https://*.sentry.io",
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.axiom.co https://*.sentry.io https://iiitk-lms.onrender.com https://api.cloudinary.com https://res.cloudinary.com",
               "frame-ancestors 'none'",
             ].join("; "),
           },
