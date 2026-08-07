@@ -9,6 +9,7 @@ import { motion } from "motion/react";
 import {
   Bug,
   User,
+  BookOpen,
   PanelLeftClose,
   PanelLeftOpen,
   Moon,
@@ -44,6 +45,7 @@ const ACCENT_BORDER = "rgba(245, 158, 11, 0.2)";
 
 const navItems = [
   { href: "/tester/bugs", icon: Bug, label: "Bugs" },
+  { href: "/tester/guide", icon: BookOpen, label: "Guide" },
   { href: "/tester/profile", icon: User, label: "Profile" },
 ];
 
