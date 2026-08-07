@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
-import { Bug, User, Menu, Moon, Sun } from "lucide-react";
+import { Bug, User, BookOpen, Menu, Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -37,6 +37,7 @@ const ACCENT_BORDER = "rgba(245, 158, 11, 0.2)";
 
 const navItems = [
   { href: "/tester/bugs", icon: Bug, label: "Bugs" },
+  { href: "/tester/guide", icon: BookOpen, label: "Guide" },
   { href: "/tester/profile", icon: User, label: "Profile" },
 ];
 
