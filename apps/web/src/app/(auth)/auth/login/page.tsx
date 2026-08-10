@@ -37,8 +37,7 @@ function LoginForm() {
       let dest = "/student";
       try {
         const payload = JSON.parse(atob(result.tokens.accessToken.split(".")[1]));
-        if (payload.role === "tester") dest = "/tester/bugs";
-        else if (payload.role === "professor") dest = "/professor";
+        if (payload.role === "professor") dest = "/professor";
         else if (payload.role === "admin") dest = "/admin";
       } catch { /* fall through to /student */ }
       window.location.href = dest;
