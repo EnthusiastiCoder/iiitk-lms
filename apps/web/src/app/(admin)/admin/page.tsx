@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-  Shield,
   Users,
   BookOpen,
   Trophy,
@@ -25,13 +24,10 @@ import Link from "next/link";
 
 interface SystemStats {
   totalUsers: number;
-  students: number;
-  professors: number;
-  admins: number;
   totalCourses: number;
   totalLessons: number;
   totalSubmissions: number;
-  totalXpEarned: number;
+  totalXp: number;
 }
 
 interface XpTransaction {
@@ -46,13 +42,10 @@ interface XpTransaction {
 export default async function AdminDashboard() {
   const defaultStats: SystemStats = {
     totalUsers: 0,
-    students: 0,
-    professors: 0,
-    admins: 0,
     totalCourses: 0,
     totalLessons: 0,
     totalSubmissions: 0,
-    totalXpEarned: 0,
+    totalXp: 0,
   };
   const stats = await serverFetch<SystemStats>("/admin/stats") ?? defaultStats;
   const auditLog = await serverFetch<XpTransaction[]>("/admin/audit-log") ?? [];
@@ -66,16 +59,6 @@ export default async function AdminDashboard() {
       icon: Users,
     },
     {
-      label: "Students",
-      value: stats.students,
-      icon: GraduationCap,
-    },
-    {
-      label: "Professors",
-      value: stats.professors,
-      icon: Shield,
-    },
-    {
       label: "Courses",
       value: stats.totalCourses,
       icon: BookOpen,
@@ -86,8 +69,13 @@ export default async function AdminDashboard() {
       icon: FileText,
     },
     {
-      label: "Total XP Earned",
-      value: stats.totalXpEarned.toLocaleString(),
+      label: "Submissions",
+      value: stats.totalSubmissions,
+      icon: GraduationCap,
+    },
+    {
+      label: "Total XP",
+      value: stats.totalXp.toLocaleString(),
       icon: Zap,
     },
   ];
@@ -133,16 +121,16 @@ export default async function AdminDashboard() {
             </div>
             <div>
               <p className="text-2xl font-bold">
-                {stats.totalXpEarned.toLocaleString()}
+                {stats.totalXp.toLocaleString()}
               </p>
-              <p className="text-xs text-white/70">XP Earned</p>
+              <p className="text-xs text-white/70">Total XP</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
         {statCards.map((stat) => (
           <Card key={stat.label}>
             <CardContent className="pt-2">
