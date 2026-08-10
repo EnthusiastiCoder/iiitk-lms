@@ -34,7 +34,14 @@ function LoginForm() {
     try {
       const result = await auth.login({ email, password });
       setTokens(result.tokens);
-      window.location.href = "/student";
+      let dest = "/student";
+      try {
+        const payload = JSON.parse(atob(result.tokens.accessToken.split(".")[1]));
+        if (payload.role === "tester") dest = "/tester/bugs";
+        else if (payload.role === "professor") dest = "/professor";
+        else if (payload.role === "admin") dest = "/admin";
+      } catch { /* fall through to /student */ }
+      window.location.href = dest;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed.");
       setIsPending(false);
