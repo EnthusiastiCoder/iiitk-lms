@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import { supabase } from "../db/supabase.js";
+import { supabase, authSupabase } from "../db/supabase.js";
 import { env } from "../config/env.js";
 import { Logger } from "../utils/logger.js";
 import {
@@ -50,7 +50,7 @@ export async function register(
   role: "student" | "professor"
 ): Promise<RegisterResponse> {
   const { data: authData, error: authError } =
-    await supabase.auth.admin.createUser({
+    await authSupabase.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
@@ -120,7 +120,7 @@ export async function login(
   email: string,
   password: string
 ): Promise<LoginResponse> {
-  const { data, error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await authSupabase.auth.signInWithPassword({
     email,
     password,
   });
